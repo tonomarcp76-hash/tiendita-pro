@@ -18,10 +18,11 @@
         .usuario-nombre { font-weight: bold; font-size: 16px; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; }
         
         .estado-firebase {
-            padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-weight: bold;
+            padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; font-size: 15px;
         }
         .estado-conectado { background: #d1fae5; color: #065f46; border: 2px solid #6ee7b7; }
         .estado-error { background: #fee2e2; color: #991b1b; border: 2px solid #fca5a5; }
+        .estado-esperando { background: #fef3c7; color: #92400e; border: 2px solid #fcd34d; }
         
         .nav { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
         .nav button {
@@ -151,8 +152,7 @@
         <span class="usuario-nombre">👤 Cajero</span>
     </div>
 
-    <!-- 🟢 ESTADO DE CONEXIÓN CON FIREBASE -->
-    <div id="estado-firebase" class="estado-firebase estado-conectado">
+    <div id="estado-firebase" class="estado-firebase estado-esperando">
         ☁️ Conectando con Firebase...
     </div>
 
@@ -163,7 +163,6 @@
         <button class="btn-reportes" onclick="mostrarSeccion('reportes')">📊 Reportes</button>
     </div>
 
-    <!-- 💰 VENTAS -->
     <div id="ventas" class="section active">
         <h2>💰 Punto de Venta</h2>
         <div class="contenedor-ventas">
@@ -190,10 +189,8 @@
         </div>
     </div>
 
-    <!-- 📋 CATÁLOGO -->
     <div id="catalogo" class="section">
         <h2>📋 Catálogo de Productos</h2>
-        
         <div id="mensaje-catalogo" class="mensaje"></div>
         
         <div class="formulario">
@@ -238,7 +235,6 @@
         </div>
     </div>
 
-    <!-- 📦 INVENTARIO -->
     <div id="inventario" class="section">
         <h2>📦 Control de Inventario</h2>
         <table class="tabla-inventario">
@@ -257,7 +253,6 @@
         </table>
     </div>
 
-    <!-- 📊 REPORTES -->
     <div id="reportes" class="section">
         <h2>📊 Reportes de Ventas</h2>
         <div class="tarjeta-reporte">
@@ -279,33 +274,34 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
 <script>
+// ⚠️ ESTA ES LA CONFIGURACIÓN CORRECTA CON TU PROYECTO REAL
 const firebaseConfig = {
     apiKey: "AIzaSyBePazlihBNNELzWGqCOjZtZu_MfDmkvVQ",
-    authDomain: "tiendita-pro-5084e.firebaseapp.com",
-    projectId: "tiendita-pro-5084e",
-    storageBucket: "tiendita-pro-5084e.firebasestorage.app",
+    authDomain: "tiendita-pro-5043e.firebaseapp.com",
+    projectId: "tiendita-pro-5043e",
+    storageBucket: "tiendita-pro-5043e.firebasestorage.app",
     messagingSenderId: "695566679797",
-    appId: "1:695566679797:web:5b53169c39361dc4e2cfbc"
+    appId: "1:695566679797:web:5b53169c3936196dc4e2cfbc"
 };
 
-try {
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    window.db = db;
-    document.getElementById('estado-firebase').textContent = '☁️ ✅ Conectado a Firebase correctamente';
-    document.getElementById('estado-firebase').className = 'estado-firebase estado-conectado';
-} catch (error) {
-    console.error('Error de Firebase:', error);
-    document.getElementById('estado-firebase').textContent = '☁️ ❌ Error de conexión: ' + error.message;
-    document.getElementById('estado-firebase').className = 'estado-firebase estado-error';
-}
-
+let db = null;
 let productos = [];
 let ventaActual = [];
 let todasLasVentas = [];
 
-cargarProductos();
-cargarVentas();
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    window.db = db;
+    document.getElementById('estado-firebase').textContent = '☁️ ✅ Conectado a Firebase correctamente';
+    document.getElementById('estado-firebase').className = 'estado-firebase estado-conectado';
+    cargarProductos();
+    cargarVentas();
+} catch (error) {
+    console.error('Error de Firebase:', error);
+    document.getElementById('estado-firebase').textContent = '☁️ ❌ Error: ' + error.message;
+    document.getElementById('estado-firebase').className = 'estado-firebase estado-error';
+}
 
 function mostrarSeccion(nombre) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -320,11 +316,17 @@ function mostrarSeccion(nombre) {
 function mostrarMensajeCatalogo(texto, tipo = 'exito') {
     const caja = document.getElementById('mensaje-catalogo');
     caja.textContent = texto;
+    caja.style.display = 'block';
     caja.className = `mensaje ${tipo}`;
-    setTimeout(() => { caja.style.display = 'none'; caja.className = 'mensaje'; }, 4000);
+    setTimeout(() => { caja.style.display = 'none'; }, 4000);
 }
 
 async function agregarProducto() {
+    if (!db) {
+        mostrarMensajeCatalogo('❌ No hay conexión con Firebase. Recarga la página.', 'error');
+        return;
+    }
+    
     const codigo = document.getElementById('prod-codigo').value.trim();
     const nombre = document.getElementById('prod-nombre').value.trim();
     const precioCompra = parseFloat(document.getElementById('prod-compra').value);
@@ -344,9 +346,6 @@ async function agregarProducto() {
     }
 
     try {
-        const db = window.db;
-        if (!db) throw new Error('Firebase no conectado');
-        
         const nuevoProducto = {
             codigo, nombre, precioCompra, precioVenta, stock, categoria,
             fechaCreacion: new Date()
@@ -369,10 +368,9 @@ async function agregarProducto() {
 }
 
 async function cargarProductos() {
+    if (!db) return;
+    
     try {
-        const db = window.db;
-        if (!db) return;
-        
         const snap = await db.collection('productos').orderBy('nombre').get();
         productos = [];
         snap.forEach(doc => {
@@ -388,10 +386,9 @@ async function cargarProductos() {
 }
 
 async function cargarVentas() {
+    if (!db) return;
+    
     try {
-        const db = window.db;
-        if (!db) return;
-        
         const snap = await db.collection('ventas').orderBy('fecha', 'desc').limit(100).get();
         todasLasVentas = [];
         snap.forEach(doc => {
@@ -431,7 +428,6 @@ function renderizarCatalogo() {
 async function eliminarProducto(id) {
     if (!confirm('⚠️ ¿Estás seguro de eliminar este producto?')) return;
     try {
-        const db = window.db;
         await db.collection('productos').doc(id).delete();
         mostrarMensajeCatalogo('✅ Producto eliminado', 'exito');
         await cargarProductos();
@@ -557,9 +553,8 @@ function imprimirTicket(venta, metodoPago) {
     let ticketHTML = `
         <div class="ticket">
             <h2>🛒 TIENDITA PRO</h2>
-            <p class="centrar">RFC: XAXX010101000</p>
-            <p class="centrar">Dirección: Calle Principal #123</p>
-            <p class="centrar">Teléfono: 55-1234-5678</p>
+            <p class="centrar">RFC: XAXX010101XXX</p>
+            <p class="centrar">Dirección: Tu Negocio, Ciudad</p>
             <div class="linea"></div>
             <p><strong>Fecha:</strong> ${fecha}</p>
             <p><strong>Folio:</strong> ${Date.now().toString().slice(-8)}</p>
@@ -587,7 +582,7 @@ function imprimirTicket(venta, metodoPago) {
             <p class="pie">¡Gracias por su compra!</p>
             <p class="pie">_________________________</p>
             <p class="pie">Firma de quien recibe</p>
-            <br><br><br>
+            <br><br>
         </div>
     `;
     
@@ -613,12 +608,12 @@ async function cobrar(metodoPago) {
     };
     
     try {
-        const db = window.db;
+        const batch = db.batch();
+        
         for (const item of ventaActual) {
             const producto = productos.find(p => p.id === item.id);
             const nuevoStock = producto.stock - item.cantidad;
-            await db.collection('productos').doc(item.id).update({ stock: nuevoStock });
-            producto.stock = nuevoStock;
+            batch.update(db.collection('productos').doc(item.id), { stock: nuevoStock });
         }
         
         const nuevaVenta = {
@@ -629,7 +624,9 @@ async function cobrar(metodoPago) {
             total, metodoPago, fecha: new Date()
         };
         
-        await db.collection('ventas').add(nuevaVenta);
+        batch.create(db.collection('ventas').doc(), nuevaVenta);
+        await batch.commit();
+        
         imprimirTicket(ventaParaTicket, metodoPago);
         limpiarVenta();
         await cargarProductos();
