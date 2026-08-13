@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiendita Pro — Punto de Venta 🛒</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f0f4f8; padding: 15px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .cabecera { 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+        }
+        .cabecera h1 { font-size: 28px; }
+        .usuario-nombre { font-weight: bold; font-size: 16px; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; }
+        
+        .nav { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .nav button {
+            padding: 14px 20px; font-size: 15px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: bold; transition: all 0.2s;
+        }
+        .nav button:hover { transform: translateY(-2px); }
+        .btn-ventas { background: #2563eb; color: white; }
+        .btn-catalogo { background: #f59e0b; color: #1f2937; }
+        .btn-inventario { background: #10b981; color: white; }
+        .btn-reportes { background: #8b5cf6; color: white; }
+
+        .section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: none; }
+        .section.active { display: block; }
+        h2 { color: #1f2937; margin-bottom: 25px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb; }
+
+        /* 💰 VENTAS */
+        .contenedor-ventas { display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
+        @media (max-width: 900px) { .contenedor-ventas { grid-template-columns: 1fr; } }
+        
+        .buscador { margin-bottom: 20px; }
+        .buscador input {
+            width: 100%; padding: 14px; font-size: 16px; border: 2px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .buscador input:focus { outline: none; border-color: #2563eb; }
+
+        .lista-productos-venta { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+        .producto-tarjeta {
+            background: #f9fafb; padding: 15px; border-radius: 10px; text-align: center;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+        }
+        .producto-tarjeta:hover { border-color: #2563eb; background: #eff6ff; transform: scale(1.03); }
+        .producto-tarjeta .nombre { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+        .producto-tarjeta .precio { color: #1e40af; font-weight: bold; font-size: 16px; }
+        .producto-tarjeta .stock { font-size: 12px; color: #6b7280; margin-top: 5px; }
+
+        .resumen-compra { background: #f8fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #2563eb; }
+        .resumen-compra h3 { margin-bottom: 15px; color: #1f2937; }
+        .item-compra {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #e5e7eb;
+        }
+        .item-compra .cantidad { background: #e5e7eb; padding: 3px 10px; border-radius: 20px; font-weight: bold; margin: 0 10px; }
+        .item-compra .btn-quitar { background: #ef4444; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .total-final { font-size: 32px; font-weight: bold; color: #1e40af; text-align: right; margin: 20px 0; }
+        .botones-pago { display: flex; flex-direction: column; gap: 10px; }
+        .btn-pagar-efectivo { background: #10b981; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .btn-pagar-efectivo:hover { background: #059669; }
+        .btn-pagar-tarjeta { background: #6366f1; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .btn-pagar-tarjeta:hover { background: #4f46e5; }
+        .btn-limpiar { background: #ef4444; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-limpiar:hover { background: #dc2626; }
+
+        /* 📋 CATÁLOGO */
+        .formulario { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #374151; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 15px;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #f59e0b; }
+        .btn-guardar {
+            background: #f59e0b; color: #1f2937; border: none; padding: 12px 25px;
+            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+        .btn-guardar:hover { background: #d97706; }
+        .lista-productos { margin-top: 25px; }
+        .producto-card {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; background: #f9fafb; border-radius: 10px; margin-bottom: 10px;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .producto-info { flex: 1; min-width: 200px; }
+        .producto-nombre { font-weight: bold; font-size: 16px; }
+        .producto-detalles { color: #6b7280; font-size: 14px; margin-top: 5px; }
+        .btn-eliminar {
+            background: #ef4444; color: white; border: none; padding: 8px 15px;
+            border-radius: 6px; cursor: pointer; font-weight: bold;
+        }
+        .btn-eliminar:hover { background: #dc2626; }
+
+        /* 📦 INVENTARIO */
+        .tabla-inventario { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .tabla-inventario th, .tabla-inventario td {
+            padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;
+        }
+        .tabla-inventario th { background: #f9fafb; font-weight: bold; color: #374151; }
+        .stock-bajo { color: #ef4444; font-weight: bold; }
+        .stock-ok { color: #10b981; font-weight: bold; }
+
+        /* 📊 REPORTES */
+        .tarjeta-reporte {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;
+        }
+        .tarjeta-reporte h3 { font-size: 24px; margin-bottom: 10px; }
+        .lista-ventas { margin-top: 20px; }
+        .venta-item {
+            padding: 15px; border-bottom: 1px solid #e5e7eb;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .venta-fecha { color: #6b7280; font-size: 14px; }
+        .venta-total { font-weight: bold; font-size: 18px; color: #1e40af; }
+        .cargando { text-align: center; padding: 20px; color: #6b7280; }
+        
+        /* 🖨️ ESTILOS PARA IMPRIMIR TICKET */
+        @media print {
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { background: white; padding: 0; font-family: 'Courier New', monospace; font-size: 14px; }
+            .no-imprimir { display: none !important; }
+            .ticket { width: 80mm; padding: 5mm; margin: 0 auto; }
+            .ticket h2 { text-align: center; font-size: 18px; margin-bottom: 10px; border: none; padding: 0; }
+            .ticket .linea { border-bottom: 1px dashed #000; margin: 5px 0; }
+            .ticket .centrar { text-align: center; }
+            .ticket .derecha { text-align: right; }
+            .ticket .item { display: flex; justify-content: space-between; margin: 3px 0; font-size: 13px; }
+            .ticket .total { font-size: 18px; font-weight: bold; margin-top: 10px; }
+            .ticket .pie { margin-top: 15px; text-align: center; font-size: 12px; }
+            @page { size: 80mm auto; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container no-imprimir">
+    <div class="cabecera">
+        <h1>🛒 Tiendita Pro</h1>
+        <span class="usuario-nombre">👤 Cajero</span>
+    </div>
+
+    <div class="nav">
+        <button class="btn-ventas" onclick="mostrarSeccion('ventas')">💰 Ventas</button>
+        <button class="btn-catalogo" onclick="mostrarSeccion('catalogo')">📋 Catálogo</button>
+        <button class="btn-inventario" onclick="mostrarSeccion('inventario')">📦 Inventario</button>
+        <button class="btn-reportes" onclick="mostrarSeccion('reportes')">📊 Reportes</button>
+    </div>
+
+    <!-- 💰 VENTAS -->
+    <div id="ventas" class="section active">
+        <h2>💰 Punto de Venta</h2>
+        <div class="contenedor-ventas">
+            <div>
+                <div class="buscador">
+                    <input type="text" id="buscar-producto" placeholder="🔍 Buscar producto por nombre o código..." oninput="filtrarProductosVenta(this.value)">
+                </div>
+                <div id="lista-productos-venta" class="lista-productos-venta">
+                    <p class="cargando">📭 No hay productos. Agrega algunos en el Catálogo.</p>
+                </div>
+            </div>
+            <div class="resumen-compra">
+                <h3>🧾 Resumen de Compra</h3>
+                <div id="items-compra">
+                    <p style="color:#6b7280;text-align:center;padding:20px;">Agrega productos para empezar</p>
+                </div>
+                <div class="total-final">$<span id="total-compra">0.00</span></div>
+                <div class="botones-pago">
+                    <button class="btn-pagar-efectivo" onclick="cobrar('efectivo')">💵 Pagar en Efectivo e Imprimir</button>
+                    <button class="btn-pagar-tarjeta" onclick="cobrar('tarjeta')">💳 Pagar con Tarjeta e Imprimir</button>
+                    <button class="btn-limpiar" onclick="limpiarVenta()">🗑️ Limpiar Venta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📋 CATÁLOGO -->
+    <div id="catalogo" class="section">
+        <h2>📋 Catálogo de Productos</h2>
+        <div class="formulario">
+            <div class="form-group">
+                <label>🏷️ Código:</label>
+                <input type="text" id="prod-codigo" placeholder="Ej: 001">
+            </div>
+            <div class="form-group">
+                <label>📦 Nombre del producto:</label>
+                <input type="text" id="prod-nombre" placeholder="Ej: Refresco Coca-Cola">
+            </div>
+            <div class="form-group">
+                <label>💰 Precio de compra ($):</label>
+                <input type="number" id="prod-compra" placeholder="10.00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>💰 Precio de venta ($):</label>
+                <input type="number" id="prod-venta" placeholder="18.00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>📦 Stock inicial:</label>
+                <input type="number" id="prod-stock" placeholder="50" min="0">
+            </div>
+            <div class="form-group">
+                <label>🏷️ Categoría:</label>
+                <select id="prod-categoria">
+                    <option value="abarrotes">Abarrotes</option>
+                    <option value="bebidas">Bebidas</option>
+                    <option value="dulces">Dulces y Snacks</option>
+                    <option value="lacteos">Lácteos</option>
+                    <option value="limpieza">Limpieza</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn-guardar" onclick="agregarProducto()">✅ Guardar Producto</button>
+        <div class="lista-productos">
+            <h3>📦 Productos Registrados</h3>
+            <div id="lista-catalogo">
+                <p class="cargando">📭 No hay productos registrados aún.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📦 INVENTARIO -->
+    <div id="inventario" class="section">
+        <h2>📦 Control de Inventario</h2>
+        <table class="tabla-inventario">
+            <thead>
+                <tr>
+                    <th>🏷️ Código</th>
+                    <th>📦 Producto</th>
+                    <th>💰 Precio Venta</th>
+                    <th>📦 Stock</th>
+                    <th>🏷️ Categoría</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-inventario-body">
+                <tr><td colspan="5" class="cargando">📭 No hay productos en inventario.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 📊 REPORTES -->
+    <div id="reportes" class="section">
+        <h2>📊 Reportes de Ventas</h2>
+        <div class="tarjeta-reporte">
+            <h3>💰 Total del Día: $<span id="total-del-dia">0.00</span></h3>
+            <p>📅 Ventas de hoy: <span id="cantidad-ventas-dia">0</span> transacciones</p>
+        </div>
+        <div class="lista-ventas">
+            <h3>📋 Historial de Todas las Ventas</h3>
+            <div id="lista-reportes">
+                <p class="cargando">📭 No hay ventas registradas aún.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🖨️ VENTANA OCULTA PARA IMPRIMIR EL TICKET -->
+<div id="ticket-impresion" style="display:none;"></div>
+
+<!-- ☁️ FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+// 🔑 TUS LLAVES DE FIREBASE
+const firebaseConfig = {
+    apiKey: "AIzaSyBePazlihBNNELzWGqCOjZtZu_MfDmkvVQ",
+    authDomain: "tiendita-pro-5084e.firebaseapp.com",
+    projectId: "tiendita-pro-5084e",
+    storageBucket: "tiendita-pro-5084e.firebasestorage.app",
+    messagingSenderId: "695566679797",
+    appId: "1:695566679797:web:5b53169c39361dc4e2cfbc"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 📦 VARIABLES GLOBALES
+let productos = [];
+let ventaActual = [];
+let todasLasVentas = [];
+
+// 🚀 CARGAR TODO AL INICIAR
+cargarProductos();
+cargarVentas();
+
+// 📂 CAMBIAR DE SECCIÓN
+function mostrarSeccion(nombre) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(nombre).classList.add('active');
+    
+    if (nombre === 'ventas') renderizarProductosVenta();
+    if (nombre === 'catalogo') renderizarCatalogo();
+    if (nombre === 'inventario') renderizarInventario();
+    if (nombre === 'reportes') renderizarReportes();
+}
+
+// 📋 AGREGAR PRODUCTO AL CATÁLOGO
+async function agregarProducto() {
+    const codigo = document.getElementById('prod-codigo').value.trim();
+    const nombre = document.getElementById('prod-nombre').value.trim();
+    const precioCompra = parseFloat(document.getElementById('prod-compra').value);
+    const precioVenta = parseFloat(document.getElementById('prod-venta').value);
+    const stock = parseInt(document.getElementById('prod-stock').value) || 0;
+    const categoria = document.getElementById('prod-categoria').value;
+    
+    if (!codigo || !nombre || !precioCompra || !precioVenta) {
+        alert('⚠️ Completa todos los campos obligatorios');
+        return;
+    }
+    
+    const existe = productos.find(p => p.codigo === codigo);
+    if (existe) {
+        alert('⚠️ Ya existe un producto con ese código');
+        return;
+    }
+
+    try {
+        const nuevoProducto = {
+            codigo, nombre, precioCompra, precioVenta, stock, categoria,
+            fechaCreacion: new Date()
+        };
+        
+        await db.collection('productos').add(nuevoProducto);
+        
+        document.getElementById('prod-codigo').value = '';
+        document.getElementById('prod-nombre').value = '';
+        document.getElementById('prod-compra').value = '';
+        document.getElementById('prod-venta').value = '';
+        document.getElementById('prod-stock').value = '';
+        
+        alert('✅ Producto guardado con éxito');
+        cargarProductos();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error: Verifica las Reglas de Firebase estén en "if true"');
+    }
+}
+
+// 📂 CARGAR PRODUCTOS DE FIREBASE
+async function cargarProductos() {
+    try {
+        const snap = await db.collection('productos').orderBy('nombre').get();
+        productos = [];
+        snap.forEach(doc => {
+            productos.push({ id: doc.id, ...doc.data() });
+        });
+        
+        renderizarCatalogo();
+        renderizarProductosVenta();
+        renderizarInventario();
+    } catch (error) {
+        console.error('Error al cargar productos:', error);
+    }
+}
+
+// 📂 CARGAR VENTAS DE FIREBASE
+async function cargarVentas() {
+    try {
+        const snap = await db.collection('ventas').orderBy('fecha', 'desc').limit(100).get();
+        todasLasVentas = [];
+        snap.forEach(doc => {
+            todasLasVentas.push({ id: doc.id, ...doc.data() });
+        });
+        renderizarReportes();
+    } catch (error) {
+        console.error('Error al cargar ventas:', error);
+    }
+}
+
+// 📋 RENDERIZAR CATÁLOGO
+function renderizarCatalogo() {
+    const contenedor = document.getElementById('lista-catalogo');
+    if (productos.length === 0) {
+        contenedor.innerHTML = '<p class="cargando">📭 No hay productos registrados aún.</p>';
+        return;
+    }
+    contenedor.innerHTML = '';
+    
+    productos.forEach(p => {
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'producto-card';
+        tarjeta.innerHTML = `
+            <div class="producto-info">
+                <div class="producto-nombre">🏷️ ${p.codigo} — ${p.nombre}</div>
+                <div class="producto-detalles">
+                    Compra: $${p.precioCompra.toFixed(2)} | Venta: $${p.precioVenta.toFixed(2)} 
+                    | Stock: ${p.stock} | ${p.categoria}
+                </div>
+            </div>
+            <button class="btn-eliminar" onclick="eliminarProducto('${p.id}')">🗑️ Eliminar</button>
+        `;
+        contenedor.appendChild(tarjeta);
+    });
+}
+
+// 🗑️ ELIMINAR PRODUCTO
+async function eliminarProducto(id) {
+    if (!confirm('⚠️ ¿Estás seguro de eliminar este producto?')) return;
+    try {
+        await db.collection('productos').doc(id).delete();
+        alert('✅ Producto eliminado');
+        cargarProductos();
+    } catch (error) {
+        alert('❌ Error al eliminar');
+    }
+}
+
+// 💰 RENDERIZAR PRODUCTOS EN VENTA
+function renderizarProductosVenta(filtro = '') {
+    const contenedor = document.getElementById('lista-productos-venta');
+    
+    const productosFiltrados = productos.filter(p => 
+        p.nombre.toLowerCase().includes(filtro.toLowerCase()) || 
+        p.codigo.includes(filtro)
+    );
+    
+    if (productosFiltrados.length === 0) {
+        contenedor.innerHTML = '<p class="cargando">📭 No se encontraron productos.</p>';
+        return;
+    }
+    
+    contenedor.innerHTML = '';
+    productosFiltrados.forEach(p => {
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'producto-tarjeta';
+        tarjeta.innerHTML = `
+            <div class="nombre">${p.nombre}</div>
+            <div class="precio">$${p.precioVenta.toFixed(2)}</div>
+            <div class="stock">Stock: ${p.stock}</div>
+        `;
+        tarjeta.onclick = () => agregarAVenta(p);
+        contenedor.appendChild(tarjeta);
+    });
+}
+
+function filtrarProductosVenta(valor) {
+    renderizarProductosVenta(valor);
+}
+
+// 🛒 AGREGAR PRODUCTO A LA VENTA
+function agregarAVenta(producto) {
+    if (producto.stock <= 0) {
+        alert('⚠️ No hay stock disponible');
+        return;
+    }
+    
+    const existe = ventaActual.find(v => v.id === producto.id);
+    if (existe) {
+        if (existe.cantidad >= producto.stock) {
+            alert(`⚠️ Solo hay ${producto.stock} unidades disponibles`);
+            return;
+        }
+        existe.cantidad++;
+    } else {
+        ventaActual.push({
+            id: producto.id, codigo: producto.codigo, nombre: producto.nombre,
+            precioVenta: producto.precioVenta, cantidad: 1, stock: producto.stock
+        });
+    }
+    
+    actualizarResumenVenta();
+}
+
+// 📊 ACTUALIZAR RESUMEN DE COMPRA
+function actualizarResumenVenta() {
+    const contenedor = document.getElementById('items-compra');
+    const totalElement = document.getElementById('total-compra');
+    
+    if (ventaActual.length === 0) {
+        contenedor.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;">Agrega productos para empezar la venta</p>';
+        totalElement.textContent = '0.00';
+        return;
+    }
+    
+    contenedor.innerHTML = '';
+    let total = 0;
+    
+    ventaActual.forEach((item, indice) => {
+        const subtotal = item.precioVenta * item.cantidad;
+        total += subtotal;
+        
+        const fila = document.createElement('div');
+        fila.className = 'item-compra';
+        fila.innerHTML = `
+            <span>${item.nombre}</span>
+            <span>
+                <button class="btn-quitar" onclick="cambiarCantidad(${indice}, -1)">−</button>
+                <span class="cantidad">${item.cantidad}</span>
+                <button class="btn-quitar" onclick="cambiarCantidad(${indice}, 1)">+</button>
+            </span>
+            <span>$${subtotal.toFixed(2)}</span>
+            <button class="btn-quitar" onclick="quitarDeVenta(${indice})">×</button>
+        `;
+        contenedor.appendChild(fila);
+    });
+    
+    totalElement.textContent = total.toFixed(2);
+}
+
+// ➕➖ CAMBIAR CANTIDAD
+function cambiarCantidad(indice, cambio) {
+    const item = ventaActual[indice];
+    const nuevaCantidad = item.cantidad + cambio;
+    
+    if (nuevaCantidad <= 0) {
+        quitarDeVenta(indice);
+        return;
+    }
+    
+    if (nuevaCantidad > item.stock) {
+        alert(`⚠️ Solo hay ${item.stock} unidades disponibles`);
+        return;
+    }
+    
+    item.cantidad = nuevaCantidad;
+    actualizarResumenVenta();
+}
+
+// ❌ QUITAR ITEM DE VENTA
+function quitarDeVenta(indice) {
+    ventaActual.splice(indice, 1);
+    actualizarResumenVenta();
+}
+
+// 🖨️ GENERAR E IMPRIMIR TICKET
+function imprimirTicket(venta, metodoPago) {
+    const fecha = new Date().toLocaleString('es-MX');
+    let ticketHTML = `
+        <div class="ticket">
+            <h2>🛒 TIENDITA PRO</h2>
+            <p class="centrar">RFC: XAXX010101000</p>
+            <p class="centrar">Dirección: Calle Principal #123</p>
+            <p class="centrar">Teléfono: 55-1234-5678</p>
+            <div class="linea"></div>
+            <p><strong>Fecha:</strong> ${fecha}</p>
+            <p><strong>Folio:</strong> ${Date.now().toString().slice(-8)}</p>
+            <div class="linea"></div>
+            <p><strong>ARTÍCULO</strong>___________________<strong>IMPORTE</strong></p>
+    `;
+    
+    venta.productos.forEach(p => {
+        ticketHTML += `
+            <div class="item">
+                <span>${p.cantidad}x ${p.nombre}</span>
+                <span>$${p.subtotal.toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    ticketHTML += `
+            <div class="linea"></div>
+            <div class="item total">
+                <span>TOTAL</span>
+                <span>$${venta.total.toFixed(2)}</span>
+            </div>
+            <p><strong>Pago:</strong> ${metodoPago === 'efectivo' ? '💵 Efectivo' : '💳 Tarjeta'}</p>
+            <div class="linea"></div>
+            <p class="pie">¡Gracias por su compra!</p>
+            <p class="pie">Síguenos en redes sociales</p>
+            <p class="pie">_________________________</p>
+            <p class="pie">Firma de quien recibe</p>
+            <br><br><br>
+        </div>
+    `;
+    
+    const contenedor = document.getElementById('ticket-impresion');
+    contenedor.innerHTML = ticketHTML;
+    window.print();
+    contenedor.innerHTML = '';
+}
+
+// 🧾 COBRAR VENTA
+async function cobrar(metodoPago) {
+    if (ventaActual.length === 0) {
+        alert('⚠️ Agrega productos primero');
+        return;
+    }
+    
+    const total = ventaActual.reduce((sum, i) => sum + (i.precioVenta * i.cantidad), 0);
+    
+    const ventaParaTicket = {
+        productos: ventaActual.map(i => ({
+            nombre: i.nombre, cantidad: i.cantidad, subtotal: i.precioVenta * i.cantidad
+        })),
+        total
+    };
+    
+    try {
+        for (const item of ventaActual) {
+            const producto = productos.find(p => p.id === item.id);
+            const nuevoStock = producto.stock - item.cantidad;
+            await db.collection('productos').doc(item.id).update({ stock: nuevoStock });
+            producto.stock = nuevoStock;
+        }
+        
+        const nuevaVenta = {
+            productos: ventaActual.map(i => ({
+                nombre: i.nombre, cantidad: i.cantidad, precioUnitario: i.precioVenta,
+                subtotal: i.precioVenta * i.cantidad
+            })),
+            total, metodoPago, fecha: new Date()
+        };
+        
+        await db.collection('ventas').add(nuevaVenta);
+        
+        // 🖨️ IMPRIMIR TICKET AUTOMÁTICAMENTE
+        imprimirTicket(ventaParaTicket, metodoPago);
+        
+        limpiarVenta();
+        cargarProductos();
+        cargarVentas();
+    } catch (error) {
+        console.error('Error al cobrar:', error);
+        alert('❌ Error al procesar la venta');
+    }
+}
+
+// 🧹 LIMPIAR VENTA
+function limpiarVenta() {
+    ventaActual = [];
+    document.getElementById('buscar-producto').value = '';
+    actualizarResumenVenta();
+}
+
+// 📦 RENDERIZAR INVENTARIO
+function renderizarInventario() {
+    const tbody = document.getElementById('tabla-inventario-body');
+    if (productos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="cargando">📭 No hay productos en inventario.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '';
+    
+    productos.forEach(p => {
+        const fila = document.createElement('tr');
+        const claseStock = p.stock <= 5 ? 'stock-bajo' : 'stock-ok';
+        fila.innerHTML = `
+            <td>${p.codigo}</td>
+            <td>${p.nombre}</td>
+            <td>$${p.precioVenta.toFixed(2)}</td>
+            <td class="${claseStock}">${p.stock}</td>
+            <td>${p.categoria}</td>
+        `;
+        tbody.appendChild(fila);
+    });
+}
+
+// 📊 RENDERIZAR REPORTES
+function renderizarReportes() {
+    const hoy = new Date().toDateString();
+    const ventasHoy = todasLasVentas.filter(v => {
+        const fecha = v.fecha?.toDate ? v.fecha.toDate() : new Date(v.fecha);
+        return fecha.toDateString() === hoy;
+    });
+    const totalDia = ventasHoy.reduce((sum, v) => sum + v.total, 0);
+    
+    document.getElementById('total-del-dia').textContent = totalDia.toFixed(2);
+    document.getElementById('cantidad-ventas-dia').textContent = ventasHoy.length;
+    
+    const contenedor = document.getElementById('lista-reportes');
+    if (todasLasVentas.length === 0) {
+        contenedor.innerHTML = '<p class="cargando">📭 No hay ventas registradas aún.</p>';
+        return;
+    }
+    
+    contenedor.innerHTML = '';
+    todasLasVentas.forEach(v => {
+        const fecha = v.fecha?.toDate ? v.fecha.toDate() : new Date(v.fecha);
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'venta-item';
+        tarjeta.innerHTML = `
+            <div>
+                <div class="venta-fecha">📅 ${fecha.toLocaleString('es-MX')}</div>
+                <div>${v.productos.length} productos • 💳 ${v.metodoPago === 'efectivo' ? 'Efectivo' : 'Tarjeta'}</div>
+            </div>
+            <div class="venta-total">$${v.total.toFixed(2)}</div>
+        `;
+        contenedor.appendChild(tarjeta);
+    });
+}
+</script>
+
+</body>
+</html>
