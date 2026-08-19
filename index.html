@@ -3,701 +3,601 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiendita Pro — Punto de Venta 🛒</title>
+    <title>🏪 Tiendita - Punto de Venta</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
-        body { background: #f0f4f8; padding: 15px; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+        :root {
+            --primario: #2563eb; --secundario: #1e40af; --exito: #16a34a;
+            --advertencia: #f59e0b; --peligro: #dc2626; --fondo: #f1f5f9;
+            --blanco: #ffffff; --texto: #1e293b; --gris: #94a3b8;
+        }
+        body { background: var(--fondo); min-height: 100vh; }
+        .oculto { display: none !important; }
         
-        .cabecera { 
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+        /* === PANTALLA DE ENTRADA === */
+        .entrada-container {
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--primario), var(--secundario));
+            padding: 20px;
         }
-        .cabecera h1 { font-size: 28px; }
-        .usuario-nombre { font-weight: bold; font-size: 16px; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; }
+        .entrada-card {
+            background: var(--blanco); padding: 50px 40px; border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 450px; text-align: center;
+        }
+        .entrada-card h1 { color: var(--primario); margin-bottom: 10px; font-size: 32px; }
+        .entrada-card p { color: var(--gris); margin-bottom: 30px; font-size: 16px; }
+        .grupo-input { margin-bottom: 25px; text-align: left; }
+        .grupo-input label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--texto); }
+        .grupo-input input {
+            width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-size: 16px; transition: border-color 0.3s;
+        }
+        .grupo-input input:focus { outline: none; border-color: var(--primario); }
+        .btn {
+            width: 100%; padding: 16px; border: none; border-radius: 8px;
+            font-size: 18px; font-weight: 600; cursor: pointer; transition: transform 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primario { background: var(--primario); color: white; }
         
-        .estado-firebase {
-            padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; font-size: 15px;
+        /* === SISTEMA PRINCIPAL === */
+        .header {
+            background: var(--blanco); padding: 15px 30px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
         }
-        .estado-conectado { background: #d1fae5; color: #065f46; border: 2px solid #6ee7b7; }
-        .estado-error { background: #fee2e2; color: #991b1b; border: 2px solid #fca5a5; }
-        .estado-esperando { background: #fef3c7; color: #92400e; border: 2px solid #fcd34d; }
-        
-        .nav { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-        .nav button {
-            padding: 14px 20px; font-size: 15px; border: none; border-radius: 8px;
-            cursor: pointer; font-weight: bold; transition: all 0.2s;
+        .nav-botones { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-btn {
+            padding: 10px 18px; border: none; border-radius: 8px;
+            background: #e2e8f0; color: var(--texto); font-weight: 500; cursor: pointer; transition: all 0.2s;
         }
-        .nav button:hover { transform: translateY(-2px); }
-        .btn-ventas { background: #2563eb; color: white; }
-        .btn-catalogo { background: #f59e0b; color: #1f2937; }
-        .btn-inventario { background: #10b981; color: white; }
-        .btn-reportes { background: #8b5cf6; color: white; }
-
-        .section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: none; }
-        .section.active { display: block; }
-        h2 { color: #1f2937; margin-bottom: 25px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb; }
-
-        .contenedor-ventas { display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
-        @media (max-width: 900px) { .contenedor-ventas { grid-template-columns: 1fr; } }
-        
-        .buscador { margin-bottom: 20px; }
-        .buscador input {
-            width: 100%; padding: 14px; font-size: 16px; border: 2px solid #e5e7eb;
-            border-radius: 8px;
+        .nav-btn.activo, .nav-btn:hover { background: var(--primario); color: white; }
+        .contenido { padding: 30px; max-width: 1400px; margin: 0 auto; }
+        .vista { display: none; }
+        .vista.activa { display: block; }
+        .tarjeta {
+            background: var(--blanco); padding: 25px; border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
         }
-        .buscador input:focus { outline: none; border-color: #2563eb; }
-
-        .lista-productos-venta { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .producto-tarjeta {
-            background: #f9fafb; padding: 15px; border-radius: 10px; text-align: center;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+        .fila { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
+        .campo { flex: 1; min-width: 200px; }
+        .campo label { display: block; margin-bottom: 6px; font-weight: 500; }
+        .campo input, .campo select {
+            width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 15px;
         }
-        .producto-tarjeta:hover { border-color: #2563eb; background: #eff6ff; transform: scale(1.03); }
-        .producto-tarjeta .nombre { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-        .producto-tarjeta .precio { color: #1e40af; font-weight: bold; font-size: 16px; }
-        .producto-tarjeta .stock { font-size: 12px; color: #6b7280; margin-top: 5px; }
-
-        .resumen-compra { background: #f8fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #2563eb; }
-        .resumen-compra h3 { margin-bottom: 15px; color: #1f2937; }
-        .item-compra {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid #e5e7eb;
+        .btn-accion {
+            padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer;
+            font-weight: 600; margin-right: 8px; margin-bottom: 8px;
         }
-        .item-compra .cantidad { background: #e5e7eb; padding: 3px 10px; border-radius: 20px; font-weight: bold; margin: 0 10px; }
-        .item-compra .btn-quitar { background: #ef4444; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-        .total-final { font-size: 32px; font-weight: bold; color: #1e40af; text-align: right; margin: 20px 0; }
-        .botones-pago { display: flex; flex-direction: column; gap: 10px; }
-        .btn-pagar-efectivo { background: #10b981; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .btn-pagar-efectivo:hover { background: #059669; }
-        .btn-pagar-tarjeta { background: #6366f1; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .btn-pagar-tarjeta:hover { background: #4f46e5; }
-        .btn-limpiar { background: #ef4444; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-limpiar:hover { background: #dc2626; }
-
-        .formulario { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #374151; }
-        .form-group input, .form-group select {
-            width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 15px;
-        }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #f59e0b; }
-        .btn-guardar {
-            background: #f59e0b; color: #1f2937; border: none; padding: 12px 25px;
-            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
-        }
-        .btn-guardar:hover { background: #d97706; }
-        .lista-productos { margin-top: 25px; }
-        .producto-card {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; background: #f9fafb; border-radius: 10px; margin-bottom: 10px;
-            flex-wrap: wrap; gap: 10px;
-        }
-        .producto-info { flex: 1; min-width: 200px; }
-        .producto-nombre { font-weight: bold; font-size: 16px; }
-        .producto-detalles { color: #6b7280; font-size: 14px; margin-top: 5px; }
-        .btn-eliminar {
-            background: #ef4444; color: white; border: none; padding: 8px 15px;
-            border-radius: 6px; cursor: pointer; font-weight: bold;
-        }
-        .btn-eliminar:hover { background: #dc2626; }
-
-        .tabla-inventario { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .tabla-inventario th, .tabla-inventario td {
-            padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;
-        }
-        .tabla-inventario th { background: #f9fafb; font-weight: bold; color: #374151; }
-        .stock-bajo { color: #ef4444; font-weight: bold; }
-        .stock-ok { color: #10b981; font-weight: bold; }
-
-        .tarjeta-reporte {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;
-        }
-        .tarjeta-reporte h3 { font-size: 24px; margin-bottom: 10px; }
-        .lista-ventas { margin-top: 20px; }
-        .venta-item {
-            padding: 15px; border-bottom: 1px solid #e5e7eb;
-            display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 10px;
-        }
-        .venta-fecha { color: #6b7280; font-size: 14px; }
-        .venta-total { font-weight: bold; font-size: 18px; color: #1e40af; }
-        .cargando { text-align: center; padding: 20px; color: #6b7280; }
-        .mensaje { padding: 15px; border-radius: 8px; margin: 15px 0; font-weight: bold; display: none; }
-        .exito { background: #d1fae5; color: #065f46; border: 2px solid #6ee7b7; display: block; }
-        .error { background: #fee2e2; color: #991b1b; border: 2px solid #fca5a5; display: block; }
-        
-        @media print {
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { background: white; padding: 0; font-family: 'Courier New', monospace; font-size: 14px; }
-            .no-imprimir { display: none !important; }
-            .ticket { width: 80mm; padding: 5mm; margin: 0 auto; }
-            .ticket h2 { text-align: center; font-size: 18px; margin-bottom: 10px; border: none; padding: 0; }
-            .ticket .linea { border-bottom: 1px dashed #000; margin: 5px 0; }
-            .ticket .centrar { text-align: center; }
-            .ticket .derecha { text-align: right; }
-            .ticket .item { display: flex; justify-content: space-between; margin: 3px 0; font-size: 13px; }
-            .ticket .total { font-size: 18px; font-weight: bold; margin-top: 10px; }
-            .ticket .pie { margin-top: 15px; text-align: center; font-size: 12px; }
-            @page { size: 80mm auto; margin: 0; }
-        }
+        .btn-verde { background: var(--exito); color: white; }
+        .btn-azul { background: var(--primario); color: white; }
+        .btn-rojo { background: var(--peligro); color: white; }
+        .btn-naranja { background: var(--advertencia); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; }
+        .total-grande { font-size: 32px; font-weight: 700; color: var(--exito); text-align: right; margin-top: 20px; }
+        .usuario-actual { font-weight: 600; color: var(--primario); }
     </style>
+
+    <!-- === FIREBASE === -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<div class="container no-imprimir">
-    <div class="cabecera">
-        <h1>🛒 Tiendita Pro</h1>
-        <span class="usuario-nombre">👤 Cajero</span>
+    <!-- ====================================== -->
+    <!-- PANTALLA DE ENTRADA (SIN CONTRASEÑA) -->
+    <!-- ====================================== -->
+    <div class="entrada-container" id="pantallaEntrada">
+        <div class="entrada-card">
+            <h1>🏪 TIENDITA - PUNTO DE VENTA</h1>
+            <p>Ingresa tu nombre para comenzar</p>
+            <div class="grupo-input">
+                <label>Nombre del Cajero</label>
+                <input type="text" id="nombreCajero" placeholder="Escribe tu nombre aquí..." autocomplete="off">
+            </div>
+            <button class="btn btn-primario" onclick="entrarAlSistema()">🚀 ENTRAR AL SISTEMA</button>
+        </div>
     </div>
 
-    <div id="estado-firebase" class="estado-firebase estado-esperando">
-        ☁️ Conectando con Firebase...
-    </div>
-
-    <div class="nav">
-        <button class="btn-ventas" onclick="mostrarSeccion('ventas')">💰 Ventas</button>
-        <button class="btn-catalogo" onclick="mostrarSeccion('catalogo')">📋 Catálogo</button>
-        <button class="btn-inventario" onclick="mostrarSeccion('inventario')">📦 Inventario</button>
-        <button class="btn-reportes" onclick="mostrarSeccion('reportes')">📊 Reportes</button>
-    </div>
-
-    <div id="ventas" class="section active">
-        <h2>💰 Punto de Venta</h2>
-        <div class="contenedor-ventas">
+    <!-- ====================================== -->
+    <!-- SISTEMA PRINCIPAL -->
+    <!-- ====================================== -->
+    <div id="sistemaPrincipal" class="oculto">
+        <header class="header">
+            <h2>🏪 Tiendita - Punto de Venta</h2>
             <div>
-                <div class="buscador">
-                    <input type="text" id="buscar-producto" placeholder="🔍 Buscar producto por nombre o código..." oninput="filtrarProductosVenta(this.value)">
-                </div>
-                <div id="lista-productos-venta" class="lista-productos-venta">
-                    <p class="cargando">📭 No hay productos. Agrega algunos en el Catálogo.</p>
+                <span class="usuario-actual" id="nombreUsuario"></span>
+                <button class="nav-btn" onclick="salirDelSistema()" style="margin-left:15px;">🚪 Salir</button>
+            </div>
+        </header>
+
+        <nav class="header" style="justify-content: center; gap:10px; flex-wrap: wrap;">
+            <button class="nav-btn activo" onclick="mostrarVista('ventas')" id="btn-nav-ventas">🛒 Ventas</button>
+            <button class="nav-btn" onclick="mostrarVista('catalogo')" id="btn-nav-catalogo">📦 Catálogo</button>
+            <button class="nav-btn" onclick="mostrarVista('compras')" id="btn-nav-compras">📥 Compras</button>
+            <button class="nav-btn" onclick="mostrarVista('reportes')" id="btn-nav-reportes">📊 Reportes</button>
+            <button class="nav-btn" onclick="mostrarVista('cierre')" id="btn-nav-cierre">💰 Cierre de Caja</button>
+        </nav>
+
+        <main class="contenido">
+            <!-- ===== VENTAS ===== -->
+            <div class="vista activa" id="vista-ventas">
+                <div class="tarjeta">
+                    <h2>🛒 Nueva Venta</h2>
+                    <div class="fila">
+                        <div class="campo">
+                            <label>Buscar Producto</label>
+                            <input type="text" id="buscarProducto" placeholder="Escribe nombre..." oninput="buscarEnCatalogo()">
+                        </div>
+                        <div class="campo">
+                            <label>Cantidad</label>
+                            <input type="number" id="cantidadVenta" value="1" min="1">
+                        </div>
+                        <button class="btn-accion btn-verde" onclick="agregarAVenta()">➕ Agregar</button>
+                    </div>
+                    
+                    <table id="tablaVenta">
+                        <thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th>Acción</th></tr></thead>
+                        <tbody id="cuerpoVenta"></tbody>
+                    </table>
+                    
+                    <div class="total-grande">Total: $<span id="totalVenta">0.00</span></div>
+                    
+                    <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap;">
+                        <button class="btn-accion btn-verde" style="font-size:18px; padding:15px 30px;" onclick="cobrarVenta()">💵 COBRAR E IMPRIMIR TICKET</button>
+                        <button class="btn-accion btn-azul" style="font-size:18px; padding:15px 30px;" onclick="abrirCaja()">🔓 ABRIR CAJA</button>
+                        <button class="btn-accion btn-naranja" style="font-size:18px; padding:15px 30px;" onclick="limpiarVenta()">🗑️ NUEVA VENTA</button>
+                    </div>
                 </div>
             </div>
-            <div class="resumen-compra">
-                <h3>🧾 Resumen de Compra</h3>
-                <div id="items-compra">
-                    <p style="color:#6b7280;text-align:center;padding:20px;">Agrega productos para empezar</p>
-                </div>
-                <div class="total-final">$<span id="total-compra">0.00</span></div>
-                <div class="botones-pago">
-                    <button class="btn-pagar-efectivo" onclick="cobrar('efectivo')">💵 Pagar en Efectivo e Imprimir</button>
-                    <button class="btn-pagar-tarjeta" onclick="cobrar('tarjeta')">💳 Pagar con Tarjeta e Imprimir</button>
-                    <button class="btn-limpiar" onclick="limpiarVenta()">🗑️ Limpiar Venta</button>
+
+            <!-- ===== CATÁLOGO (CORREGIDO - AHORA SÍ GUARDA) ===== -->
+            <div class="vista" id="vista-catalogo">
+                <div class="tarjeta">
+                    <h2>📦 Catálogo de Productos</h2>
+                    <div class="fila">
+                        <div class="campo">
+                            <label>Nombre del Producto</label>
+                            <input type="text" id="prodNombre" placeholder="Ej: Pan dulce">
+                        </div>
+                        <div class="campo">
+                            <label>Precio de Venta ($)</label>
+                            <input type="number" id="prodPrecio" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="campo">
+                            <label>Stock Inicial</label>
+                            <input type="number" id="prodStock" min="0" placeholder="0">
+                        </div>
+                        <button class="btn-accion btn-verde" onclick="guardarProducto()">💾 GUARDAR PRODUCTO</button>
+                    </div>
+                    <table id="tablaCatalogo">
+                        <thead><tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+                        <tbody id="cuerpoCatalogo"></tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+
+            <!-- ===== COMPRAS (INCLUIDA) ===== -->
+            <div class="vista" id="vista-compras">
+                <div class="tarjeta">
+                    <h2>📥 Registro de Compras / Entradas</h2>
+                    <div class="fila">
+                        <div class="campo">
+                            <label>Nombre del Producto</label>
+                            <input type="text" id="compraNombre" placeholder="Ej: Pan dulce">
+                        </div>
+                        <div class="campo">
+                            <label>Cantidad Comprada</label>
+                            <input type="number" id="compraCantidad" min="1" placeholder="1">
+                        </div>
+                        <div class="campo">
+                            <label>Precio de Compra ($)</label>
+                            <input type="number" id="compraPrecio" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <button class="btn-accion btn-verde" onclick="registrarCompra()">✅ REGISTRAR COMPRA</button>
+                    </div>
+                    <table id="tablaCompras">
+                        <thead><tr><th>Fecha</th><th>Hora</th><th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Total</th><th>Cajero</th></tr></thead>
+                        <tbody id="cuerpoCompras"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== REPORTES ===== -->
+            <div class="vista" id="vista-reportes">
+                <div class="tarjeta">
+                    <h2>📊 Reporte de Ventas</h2>
+                    <div style="font-size:20px; margin:20px 0; line-height:2;">
+                        <p><strong>Total Vendido:</strong> <span style="color:var(--exito); font-weight:bold; font-size:28px;">$<span id="totalSemanal">0.00</span></span></p>
+                        <p><strong>Ventas Realizadas:</strong> <span id="cantidadVentas">0</span></p>
+                    </div>
+                    <table id="tablaReportes">
+                        <thead><tr><th>Fecha</th><th>Hora</th><th>Productos</th><th>Total</th><th>Cajero</th></tr></thead>
+                        <tbody id="cuerpoReportes"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== CIERRE DE CAJA ===== -->
+            <div class="vista" id="vista-cierre">
+                <div class="tarjeta">
+                    <h2>💰 Cierre de Caja</h2>
+                    <div style="font-size:20px; line-height:2.5; margin:20px 0;">
+                        <p><strong>Fecha:</strong> <span id="cierre-fecha"></span></p>
+                        <p><strong>Cajero:</strong> <span id="cierre-cajero"></span></p>
+                        <p><strong>Total Ventas del Día:</strong> <span id="cierre-total" style="color:var(--exito); font-weight:bold;">$0.00</span></p>
+                        <p><strong>Ventas Realizadas:</strong> <span id="cierre-cantidad">0</span></p>
+                    </div>
+                    <button class="btn-accion btn-verde" style="font-size:18px; padding:15px 30px;" onclick="hacerCierre()">✅ HACER CIERRE DE CAJA</button>
+                    <button class="btn-accion btn-azul" style="font-size:18px; padding:15px 30px; margin-left:10px;" onclick="reiniciarCierre()">🔄 Reiniciar Conteo</button>
+                    
+                    <h3 style="margin-top:40px; border-top:2px solid #eee; padding-top:20px;">📜 Historial de Cierres</h3>
+                    <table id="tablaCierres">
+                        <thead><tr><th>Fecha</th><th>Cajero</th><th>Total</th><th>Ventas</th></tr></thead>
+                        <tbody id="cuerpoCierres"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div id="catalogo" class="section">
-        <h2>📋 Catálogo de Productos</h2>
-        <div id="mensaje-catalogo" class="mensaje"></div>
-        
-        <div class="formulario">
-            <div class="form-group">
-                <label>🏷️ Código:</label>
-                <input type="text" id="prod-codigo" placeholder="Ej: 001">
-            </div>
-            <div class="form-group">
-                <label>📦 Nombre del producto:</label>
-                <input type="text" id="prod-nombre" placeholder="Ej: Refresco Coca-Cola">
-            </div>
-            <div class="form-group">
-                <label>💰 Precio de compra ($):</label>
-                <input type="number" id="prod-compra" placeholder="10.00" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>💰 Precio de venta ($):</label>
-                <input type="number" id="prod-venta" placeholder="18.00" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>📦 Stock inicial:</label>
-                <input type="number" id="prod-stock" placeholder="50" min="0">
-            </div>
-            <div class="form-group">
-                <label>🏷️ Categoría:</label>
-                <select id="prod-categoria">
-                    <option value="abarrotes">Abarrotes</option>
-                    <option value="bebidas">Bebidas</option>
-                    <option value="dulces">Dulces y Snacks</option>
-                    <option value="lacteos">Lácteos</option>
-                    <option value="limpieza">Limpieza</option>
-                    <option value="otros">Otros</option>
-                </select>
-            </div>
-        </div>
-        <button class="btn-guardar" onclick="agregarProducto()">✅ Guardar Producto</button>
-        <div class="lista-productos">
-            <h3>📦 Productos Registrados</h3>
-            <div id="lista-catalogo">
-                <p class="cargando">📭 No hay productos registrados aún.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="inventario" class="section">
-        <h2>📦 Control de Inventario</h2>
-        <table class="tabla-inventario">
-            <thead>
-                <tr>
-                    <th>🏷️ Código</th>
-                    <th>📦 Producto</th>
-                    <th>💰 Precio Venta</th>
-                    <th>📦 Stock</th>
-                    <th>🏷️ Categoría</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-inventario-body">
-                <tr><td colspan="5" class="cargando">📭 No hay productos en inventario.</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div id="reportes" class="section">
-        <h2>📊 Reportes de Ventas</h2>
-        <div class="tarjeta-reporte">
-            <h3>💰 Total del Día: $<span id="total-del-dia">0.00</span></h3>
-            <p>📅 Ventas de hoy: <span id="cantidad-ventas-dia">0</span> transacciones</p>
-        </div>
-        <div class="lista-ventas">
-            <h3>📋 Historial de Todas las Ventas</h3>
-            <div id="lista-reportes">
-                <p class="cargando">📭 No hay ventas registradas aún.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="ticket-impresion" style="display:none;"></div>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-<script>
-// ⚠️ ESTA ES LA CONFIGURACIÓN CORRECTA CON TU PROYECTO REAL
-const firebaseConfig = {
-    apiKey: "AIzaSyBePazlihBNNELzWGqCOjZtZu_MfDmkvVQ",
-    authDomain: "tiendita-pro-5043e.firebaseapp.com",
-    projectId: "tiendita-pro-5043e",
-    storageBucket: "tiendita-pro-5043e.firebasestorage.app",
-    messagingSenderId: "695566679797",
-    appId: "1:695566679797:web:5b53169c3936196dc4e2cfbc"
-};
-
-let db = null;
-let productos = [];
-let ventaActual = [];
-let todasLasVentas = [];
-
-try {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-    window.db = db;
-    document.getElementById('estado-firebase').textContent = '☁️ ✅ Conectado a Firebase correctamente';
-    document.getElementById('estado-firebase').className = 'estado-firebase estado-conectado';
-    cargarProductos();
-    cargarVentas();
-} catch (error) {
-    console.error('Error de Firebase:', error);
-    document.getElementById('estado-firebase').textContent = '☁️ ❌ Error: ' + error.message;
-    document.getElementById('estado-firebase').className = 'estado-firebase estado-error';
-}
-
-function mostrarSeccion(nombre) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById(nombre).classList.add('active');
-    
-    if (nombre === 'ventas') renderizarProductosVenta();
-    if (nombre === 'catalogo') renderizarCatalogo();
-    if (nombre === 'inventario') renderizarInventario();
-    if (nombre === 'reportes') renderizarReportes();
-}
-
-function mostrarMensajeCatalogo(texto, tipo = 'exito') {
-    const caja = document.getElementById('mensaje-catalogo');
-    caja.textContent = texto;
-    caja.style.display = 'block';
-    caja.className = `mensaje ${tipo}`;
-    setTimeout(() => { caja.style.display = 'none'; }, 4000);
-}
-
-async function agregarProducto() {
-    if (!db) {
-        mostrarMensajeCatalogo('❌ No hay conexión con Firebase. Recarga la página.', 'error');
-        return;
-    }
-    
-    const codigo = document.getElementById('prod-codigo').value.trim();
-    const nombre = document.getElementById('prod-nombre').value.trim();
-    const precioCompra = parseFloat(document.getElementById('prod-compra').value);
-    const precioVenta = parseFloat(document.getElementById('prod-venta').value);
-    const stock = parseInt(document.getElementById('prod-stock').value) || 0;
-    const categoria = document.getElementById('prod-categoria').value;
-    
-    if (!codigo || !nombre || !precioCompra || !precioVenta) {
-        mostrarMensajeCatalogo('⚠️ Completa todos los campos obligatorios', 'error');
-        return;
-    }
-    
-    const existe = productos.find(p => p.codigo === codigo);
-    if (existe) {
-        mostrarMensajeCatalogo('⚠️ Ya existe un producto con ese código', 'error');
-        return;
-    }
-
-    try {
-        const nuevoProducto = {
-            codigo, nombre, precioCompra, precioVenta, stock, categoria,
-            fechaCreacion: new Date()
+    <!-- ====================================== -->
+    <!-- JAVASCRIPT: FIREBASE + FUNCIONES -->
+    <!-- ====================================== -->
+    <script>
+        // === CONFIGURACIÓN FIREBASE ===
+        const firebaseConfig = {
+            apiKey: "AQUÍ-TU-API-KEY",
+            authDomain: "tu-proyecto.firebaseapp.com",
+            projectId: "tu-proyecto",
+            storageBucket: "tu-proyecto.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abc123def456"
         };
-        
-        await db.collection('productos').add(nuevoProducto);
-        
-        document.getElementById('prod-codigo').value = '';
-        document.getElementById('prod-nombre').value = '';
-        document.getElementById('prod-compra').value = '';
-        document.getElementById('prod-venta').value = '';
-        document.getElementById('prod-stock').value = '';
-        
-        mostrarMensajeCatalogo('✅ Producto guardado con éxito', 'exito');
-        await cargarProductos();
-    } catch (error) {
-        console.error('Error al guardar:', error);
-        mostrarMensajeCatalogo('❌ Error: ' + error.message + ' — Revisa las Reglas de Firebase → pon "if true" y publica', 'error');
-    }
-}
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-async function cargarProductos() {
-    if (!db) return;
-    
-    try {
-        const snap = await db.collection('productos').orderBy('nombre').get();
-        productos = [];
-        snap.forEach(doc => {
-            productos.push({ id: doc.id, ...doc.data() });
-        });
-        
-        renderizarCatalogo();
-        renderizarProductosVenta();
-        renderizarInventario();
-    } catch (error) {
-        console.error('Error al cargar productos:', error);
-    }
-}
+        let cajeroActual = '';
+        let carrito = [];
+        let ventaTotal = 0;
 
-async function cargarVentas() {
-    if (!db) return;
-    
-    try {
-        const snap = await db.collection('ventas').orderBy('fecha', 'desc').limit(100).get();
-        todasLasVentas = [];
-        snap.forEach(doc => {
-            todasLasVentas.push({ id: doc.id, ...doc.data() });
-        });
-        renderizarReportes();
-    } catch (error) {
-        console.error('Error al cargar ventas:', error);
-    }
-}
-
-function renderizarCatalogo() {
-    const contenedor = document.getElementById('lista-catalogo');
-    if (productos.length === 0) {
-        contenedor.innerHTML = '<p class="cargando">📭 No hay productos registrados aún.</p>';
-        return;
-    }
-    contenedor.innerHTML = '';
-    
-    productos.forEach(p => {
-        const tarjeta = document.createElement('div');
-        tarjeta.className = 'producto-card';
-        tarjeta.innerHTML = `
-            <div class="producto-info">
-                <div class="producto-nombre">🏷️ ${p.codigo} — ${p.nombre}</div>
-                <div class="producto-detalles">
-                    Compra: $${p.precioCompra.toFixed(2)} | Venta: $${p.precioVenta.toFixed(2)} 
-                    | Stock: ${p.stock} | ${p.categoria}
-                </div>
-            </div>
-            <button class="btn-eliminar" onclick="eliminarProducto('${p.id}')">🗑️ Eliminar</button>
-        `;
-        contenedor.appendChild(tarjeta);
-    });
-}
-
-async function eliminarProducto(id) {
-    if (!confirm('⚠️ ¿Estás seguro de eliminar este producto?')) return;
-    try {
-        await db.collection('productos').doc(id).delete();
-        mostrarMensajeCatalogo('✅ Producto eliminado', 'exito');
-        await cargarProductos();
-    } catch (error) {
-        mostrarMensajeCatalogo('❌ Error al eliminar: ' + error.message, 'error');
-    }
-}
-
-function renderizarProductosVenta(filtro = '') {
-    const contenedor = document.getElementById('lista-productos-venta');
-    
-    const productosFiltrados = productos.filter(p => 
-        p.nombre.toLowerCase().includes(filtro.toLowerCase()) || 
-        p.codigo.includes(filtro)
-    );
-    
-    if (productosFiltrados.length === 0) {
-        contenedor.innerHTML = '<p class="cargando">📭 No se encontraron productos.</p>';
-        return;
-    }
-    
-    contenedor.innerHTML = '';
-    productosFiltrados.forEach(p => {
-        const tarjeta = document.createElement('div');
-        tarjeta.className = 'producto-tarjeta';
-        tarjeta.innerHTML = `
-            <div class="nombre">${p.nombre}</div>
-            <div class="precio">$${p.precioVenta.toFixed(2)}</div>
-            <div class="stock">Stock: ${p.stock}</div>
-        `;
-        tarjeta.onclick = () => agregarAVenta(p);
-        contenedor.appendChild(tarjeta);
-    });
-}
-
-function filtrarProductosVenta(valor) {
-    renderizarProductosVenta(valor);
-}
-
-function agregarAVenta(producto) {
-    if (producto.stock <= 0) {
-        alert('⚠️ No hay stock disponible');
-        return;
-    }
-    
-    const existe = ventaActual.find(v => v.id === producto.id);
-    if (existe) {
-        if (existe.cantidad >= producto.stock) {
-            alert(`⚠️ Solo hay ${producto.stock} unidades disponibles`);
-            return;
+        // === ENTRAR AL SISTEMA ===
+        function entrarAlSistema() {
+            const nombre = document.getElementById('nombreCajero').value.trim();
+            if (!nombre) return alert('⚠️ Escribe tu nombre para continuar');
+            
+            cajeroActual = nombre;
+            document.getElementById('pantallaEntrada').classList.add('oculto');
+            document.getElementById('sistemaPrincipal').classList.remove('oculto');
+            document.getElementById('nombreUsuario').textContent = '👤 ' + cajeroActual;
+            
+            cargarCatalogo();
+            cargarReportes();
+            cargarHistorialCierres();
+            actualizarFechaCierre();
         }
-        existe.cantidad++;
-    } else {
-        ventaActual.push({
-            id: producto.id, codigo: producto.codigo, nombre: producto.nombre,
-            precioVenta: producto.precioVenta, cantidad: 1, stock: producto.stock
-        });
-    }
-    
-    actualizarResumenVenta();
-}
 
-function actualizarResumenVenta() {
-    const contenedor = document.getElementById('items-compra');
-    const totalElement = document.getElementById('total-compra');
-    
-    if (ventaActual.length === 0) {
-        contenedor.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;">Agrega productos para empezar la venta</p>';
-        totalElement.textContent = '0.00';
-        return;
-    }
-    
-    contenedor.innerHTML = '';
-    let total = 0;
-    
-    ventaActual.forEach((item, indice) => {
-        const subtotal = item.precioVenta * item.cantidad;
-        total += subtotal;
-        
-        const fila = document.createElement('div');
-        fila.className = 'item-compra';
-        fila.innerHTML = `
-            <span>${item.nombre}</span>
-            <span>
-                <button class="btn-quitar" onclick="cambiarCantidad(${indice}, -1)">−</button>
-                <span class="cantidad">${item.cantidad}</span>
-                <button class="btn-quitar" onclick="cambiarCantidad(${indice}, 1)">+</button>
-            </span>
-            <span>$${subtotal.toFixed(2)}</span>
-            <button class="btn-quitar" onclick="quitarDeVenta(${indice})">×</button>
-        `;
-        contenedor.appendChild(fila);
-    });
-    
-    totalElement.textContent = total.toFixed(2);
-}
-
-function cambiarCantidad(indice, cambio) {
-    const item = ventaActual[indice];
-    const nuevaCantidad = item.cantidad + cambio;
-    
-    if (nuevaCantidad <= 0) {
-        quitarDeVenta(indice);
-        return;
-    }
-    
-    if (nuevaCantidad > item.stock) {
-        alert(`⚠️ Solo hay ${item.stock} unidades disponibles`);
-        return;
-    }
-    
-    item.cantidad = nuevaCantidad;
-    actualizarResumenVenta();
-}
-
-function quitarDeVenta(indice) {
-    ventaActual.splice(indice, 1);
-    actualizarResumenVenta();
-}
-
-function imprimirTicket(venta, metodoPago) {
-    const fecha = new Date().toLocaleString('es-MX');
-    let ticketHTML = `
-        <div class="ticket">
-            <h2>🛒 TIENDITA PRO</h2>
-            <p class="centrar">RFC: XAXX010101XXX</p>
-            <p class="centrar">Dirección: Tu Negocio, Ciudad</p>
-            <div class="linea"></div>
-            <p><strong>Fecha:</strong> ${fecha}</p>
-            <p><strong>Folio:</strong> ${Date.now().toString().slice(-8)}</p>
-            <div class="linea"></div>
-            <p><strong>ARTÍCULO</strong>___________________<strong>IMPORTE</strong></p>
-    `;
-    
-    venta.productos.forEach(p => {
-        ticketHTML += `
-            <div class="item">
-                <span>${p.cantidad}x ${p.nombre}</span>
-                <span>$${p.subtotal.toFixed(2)}</span>
-            </div>
-        `;
-    });
-    
-    ticketHTML += `
-            <div class="linea"></div>
-            <div class="item total">
-                <span>TOTAL</span>
-                <span>$${venta.total.toFixed(2)}</span>
-            </div>
-            <p><strong>Pago:</strong> ${metodoPago === 'efectivo' ? '💵 Efectivo' : '💳 Tarjeta'}</p>
-            <div class="linea"></div>
-            <p class="pie">¡Gracias por su compra!</p>
-            <p class="pie">_________________________</p>
-            <p class="pie">Firma de quien recibe</p>
-            <br><br>
-        </div>
-    `;
-    
-    const contenedor = document.getElementById('ticket-impresion');
-    contenedor.innerHTML = ticketHTML;
-    window.print();
-    contenedor.innerHTML = '';
-}
-
-async function cobrar(metodoPago) {
-    if (ventaActual.length === 0) {
-        alert('⚠️ Agrega productos primero');
-        return;
-    }
-    
-    const total = ventaActual.reduce((sum, i) => sum + (i.precioVenta * i.cantidad), 0);
-    
-    const ventaParaTicket = {
-        productos: ventaActual.map(i => ({
-            nombre: i.nombre, cantidad: i.cantidad, subtotal: i.precioVenta * i.cantidad
-        })),
-        total
-    };
-    
-    try {
-        const batch = db.batch();
-        
-        for (const item of ventaActual) {
-            const producto = productos.find(p => p.id === item.id);
-            const nuevoStock = producto.stock - item.cantidad;
-            batch.update(db.collection('productos').doc(item.id), { stock: nuevoStock });
+        // === SALIR DEL SISTEMA ===
+        function salirDelSistema() {
+            if (!confirm('¿Seguro que quieres salir?')) return;
+            document.getElementById('sistemaPrincipal').classList.add('oculto');
+            document.getElementById('pantallaEntrada').classList.remove('oculto');
+            document.getElementById('nombreCajero').value = '';
+            carrito = [];
+            ventaTotal = 0;
         }
-        
-        const nuevaVenta = {
-            productos: ventaActual.map(i => ({
-                nombre: i.nombre, cantidad: i.cantidad, precioUnitario: i.precioVenta,
-                subtotal: i.precioVenta * i.cantidad
-            })),
-            total, metodoPago, fecha: new Date()
-        };
-        
-        batch.create(db.collection('ventas').doc(), nuevaVenta);
-        await batch.commit();
-        
-        imprimirTicket(ventaParaTicket, metodoPago);
-        limpiarVenta();
-        await cargarProductos();
-        await cargarVentas();
-    } catch (error) {
-        console.error('Error al cobrar:', error);
-        alert('❌ Error al procesar la venta: ' + error.message);
-    }
-}
 
-function limpiarVenta() {
-    ventaActual = [];
-    document.getElementById('buscar-producto').value = '';
-    actualizarResumenVenta();
-}
+        // === NAVEGACIÓN ===
+        function mostrarVista(nombre) {
+            document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('activo'));
+            document.getElementById(`vista-${nombre}`).classList.add('activa');
+            document.getElementById(`btn-nav-${nombre}`).classList.add('activo');
+        }
 
-function renderizarInventario() {
-    const tbody = document.getElementById('tabla-inventario-body');
-    if (productos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="cargando">📭 No hay productos en inventario.</td></tr>';
-        return;
-    }
-    tbody.innerHTML = '';
-    
-    productos.forEach(p => {
-        const fila = document.createElement('tr');
-        const claseStock = p.stock <= 5 ? 'stock-bajo' : 'stock-ok';
-        fila.innerHTML = `
-            <td>${p.codigo}</td>
-            <td>${p.nombre}</td>
-            <td>$${p.precioVenta.toFixed(2)}</td>
-            <td class="${claseStock}">${p.stock}</td>
-            <td>${p.categoria}</td>
-        `;
-        tbody.appendChild(fila);
-    });
-}
+        // ========== CATÁLOGO: AHORA SÍ GUARDA ==========
+        async function guardarProducto() {
+            const nombre = document.getElementById('prodNombre').value.trim();
+            const precio = parseFloat(document.getElementById('prodPrecio').value);
+            const stock = parseInt(document.getElementById('prodStock').value) || 0;
+            
+            if (!nombre) return alert('⚠️ Escribe el nombre del producto');
+            if (!precio || precio <= 0) return alert('⚠️ Escribe un precio válido');
+            
+            try {
+                await db.collection('productos').add({
+                    nombre: nombre,
+                    precio: precio,
+                    stock: stock
+                });
+                alert('✅ Producto guardado correctamente!');
+                document.getElementById('prodNombre').value = '';
+                document.getElementById('prodPrecio').value = '';
+                document.getElementById('prodStock').value = '';
+                cargarCatalogo();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al guardar: ' + error.message + '\nRevisa las reglas de Firestore.');
+            }
+        }
 
-function renderizarReportes() {
-    const hoy = new Date().toDateString();
-    const ventasHoy = todasLasVentas.filter(v => {
-        const fecha = v.fecha?.toDate ? v.fecha.toDate() : new Date(v.fecha);
-        return fecha.toDateString() === hoy;
-    });
-    const totalDia = ventasHoy.reduce((sum, v) => sum + v.total, 0);
-    
-    document.getElementById('total-del-dia').textContent = totalDia.toFixed(2);
-    document.getElementById('cantidad-ventas-dia').textContent = ventasHoy.length;
-    
-    const contenedor = document.getElementById('lista-reportes');
-    if (todasLasVentas.length === 0) {
-        contenedor.innerHTML = '<p class="cargando">📭 No hay ventas registradas aún.</p>';
-        return;
-    }
-    
-    contenedor.innerHTML = '';
-    todasLasVentas.forEach(v => {
-        const fecha = v.fecha?.toDate ? v.fecha.toDate() : new Date(v.fecha);
-        const tarjeta = document.createElement('div');
-        tarjeta.className = 'venta-item';
-        tarjeta.innerHTML = `
-            <div>
-                <div class="venta-fecha">📅 ${fecha.toLocaleString('es-MX')}</div>
-                <div>${v.productos.length} productos • 💳 ${v.metodoPago === 'efectivo' ? 'Efectivo' : 'Tarjeta'}</div>
-            </div>
-            <div class="venta-total">$${v.total.toFixed(2)}</div>
-        `;
-        contenedor.appendChild(tarjeta);
-    });
-}
-</script>
+        async function cargarCatalogo() {
+            const cuerpo = document.getElementById('cuerpoCatalogo');
+            cuerpo.innerHTML = '';
+            try {
+                const snap = await db.collection('productos').orderBy('nombre').get();
+                if (snap.empty) {
+                    cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--gris);">No hay productos registrados</td></tr>';
+                    return;
+                }
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    cuerpo.innerHTML += `
+                        <tr>
+                            <td>${p.nombre}</td>
+                            <td>$${p.precio.toFixed(2)}</td>
+                            <td>${p.stock || 0}</td>
+                            <td>
+                                <button class="btn-accion btn-rojo" onclick="eliminarProducto('${doc.id}')">🗑️ Eliminar</button>
+                            </td>
+                        </tr>`;
+                });
+            } catch (error) {
+                cuerpo.innerHTML = '<tr><td colspan="4" style="color:red;">Error cargando productos</td></tr>';
+                console.error(error);
+            }
+        }
 
+        async function eliminarProducto(id) {
+            if (!confirm('¿Eliminar este producto?')) return;
+            try {
+                await db.collection('productos').doc(id).delete();
+                alert('✅ Producto eliminado');
+                cargarCatalogo();
+            } catch (error) {
+                alert('❌ Error al eliminar: ' + error.message);
+            }
+        }
+
+        // === BUSCAR PRODUCTO ===
+        function buscarEnCatalogo() {}
+
+        // === AGREGAR A VENTA ===
+        async function agregarAVenta() {
+            const nombre = document.getElementById('buscarProducto').value.trim();
+            const cantidad = parseInt(document.getElementById('cantidadVenta').value) || 1;
+            if (!nombre) return alert('Escribe el nombre del producto');
+            
+            const snap = await db.collection('productos').where('nombre', '==', nombre).get();
+            if (snap.empty) return alert('⚠️ Producto no encontrado');
+            
+            snap.forEach(doc => {
+                const prod = doc.data();
+                const subtotal = prod.precio * cantidad;
+                carrito.push({ id: doc.id, nombre: prod.nombre, precio: prod.precio, cantidad, subtotal });
+                actualizarTablaVenta();
+            });
+            document.getElementById('buscarProducto').value = '';
+        }
+
+        function actualizarTablaVenta() {
+            const cuerpo = document.getElementById('cuerpoVenta');
+            cuerpo.innerHTML = '';
+            ventaTotal = 0;
+            carrito.forEach((item, idx) => {
+                ventaTotal += item.subtotal;
+                cuerpo.innerHTML += `
+                    <tr>
+                        <td>${item.nombre}</td>
+                        <td>$${item.precio.toFixed(2)}</td>
+                        <td>${item.cantidad}</td>
+                        <td>$${item.subtotal.toFixed(2)}</td>
+                        <td><button class="btn-accion btn-rojo" onclick="quitarDelCarrito(${idx})">❌ Quitar</button></td>
+                    </tr>`;
+            });
+            document.getElementById('totalVenta').textContent = ventaTotal.toFixed(2);
+        }
+
+        function quitarDelCarrito(idx) {
+            carrito.splice(idx, 1);
+            actualizarTablaVenta();
+        }
+
+        function limpiarVenta() {
+            carrito = [];
+            ventaTotal = 0;
+            actualizarTablaVenta();
+        }
+
+        // === COBRAR VENTA ===
+        async function cobrarVenta() {
+            if (carrito.length === 0) return alert('⚠️ Agrega productos primero');
+            
+            const fecha = new Date();
+            const datosVenta = {
+                fecha: fecha.toLocaleDateString(),
+                hora: fecha.toLocaleTimeString(),
+                cajero: cajeroActual,
+                productos: carrito,
+                total: ventaTotal
+            };
+
+            await db.collection('ventas').add(datosVenta);
+
+            // Descontar stock
+            for (const item of carrito) {
+                const snap = await db.collection('productos').doc(item.id).get();
+                if (snap.exists) {
+                    const stockActual = snap.data().stock || 0;
+                    await db.collection('productos').doc(item.id).update({ stock: stockActual - item.cantidad });
+                }
+            }
+
+            abrirCaja();
+            imprimirTicket(datosVenta);
+            alert('✅ Venta realizada con éxito!');
+            limpiarVenta();
+            cargarCatalogo();
+            cargarReportes();
+        }
+
+        function abrirCaja() {
+            console.log('🔓 Caja abierta');
+            alert('🔓 Caja registradora abierta');
+        }
+
+        function imprimirTicket(venta) {
+            let ticket = `
+====================================
+        TIENDITA - PUNTO DE VENTA
+====================================
+Fecha: ${venta.fecha}   Hora: ${venta.hora}
+Cajero: ${venta.cajero}
+------------------------------------
+PRODUCTO            CANT  PRECIO  SUBT
+`;
+            venta.productos.forEach(p => {
+                ticket += `${p.nombre.padEnd(16)} ${String(p.cantidad).padStart(3)} $${String(p.precio.toFixed(2)).padStart(6)} $${String(p.subtotal.toFixed(2)).padStart(6)}\n`;
+            });
+            ticket += `
+------------------------------------
+TOTAL: $${venta.total.toFixed(2)}
+====================================
+      ¡GRACIAS POR SU COMPRA!
+====================================
+`;
+            console.log('🧾 TICKET:\n', ticket);
+            window.print();
+        }
+
+        // ========== COMPRAS ==========
+        async function registrarCompra() {
+            const nombre = document.getElementById('compraNombre').value.trim();
+            const cantidad = parseInt(document.getElementById('compraCantidad').value);
+            const precio = parseFloat(document.getElementById('compraPrecio').value);
+            
+            if (!nombre || !cantidad || !precio) return alert('⚠️ Completa todos los campos');
+            
+            const fecha = new Date();
+            const total = cantidad * precio;
+            
+            await db.collection('compras').add({
+                fecha: fecha.toLocaleDateString(),
+                hora: fecha.toLocaleTimeString(),
+                nombre, cantidad, precioUnitario: precio, total,
+                cajero: cajeroActual
+            });
+
+            // Actualizar stock
+            const snap = await db.collection('productos').where('nombre', '==', nombre).get();
+            if (!snap.empty) {
+                const doc = snap.docs[0];
+                const stockActual = doc.data().stock || 0;
+                await db.collection('productos').doc(doc.id).update({ stock: stockActual + cantidad });
+            } else {
+                await db.collection('productos').add({ 
+                    nombre, 
+                    precio: Math.round(precio * 1.2 * 100) / 100, 
+                    stock: cantidad 
+                });
+            }
+
+            alert('✅ Compra registrada y stock actualizado');
+            document.getElementById('compraNombre').value = '';
+            document.getElementById('compraCantidad').value = '';
+            document.getElementById('compraPrecio').value = '';
+            cargarCompras();
+            cargarCatalogo();
+        }
+
+        async function cargarCompras() {
+            const snap = await db.collection('compras').orderBy('fecha', 'desc').limit(20).get();
+            const cuerpo = document.getElementById('cuerpoCompras');
+            cuerpo.innerHTML = '';
+            snap.forEach(doc => {
+                const c = doc.data();
+                cuerpo.innerHTML += `
+                    <tr>
+                        <td>${c.fecha}</td><td>${c.hora}</td><td>${c.nombre}</td>
+                        <td>${c.cantidad}</td><td>$${c.precioUnitario.toFixed(2)}</td>
+                        <td>$${c.total.toFixed(2)}</td><td>${c.cajero}</td>
+                    </tr>`;
+            });
+        }
+
+        // === REPORTES ===
+        async function cargarReportes() {
+            const snap = await db.collection('ventas').orderBy('fecha', 'desc').limit(50).get();
+            const cuerpo = document.getElementById('cuerpoReportes');
+            cuerpo.innerHTML = '';
+            let total = 0;
+            snap.forEach(doc => {
+                const v = doc.data();
+                total += v.total;
+                cuerpo.innerHTML += `
+                    <tr>
+                        <td>${v.fecha}</td><td>${v.hora}</td><td>${v.productos.length} productos</td>
+                        <td>$${v.total.toFixed(2)}</td><td>${v.cajero}</td>
+                    </tr>`;
+            });
+            document.getElementById('totalSemanal').textContent = total.toFixed(2);
+            document.getElementById('cantidadVentas').textContent = snap.size;
+        }
+
+        // === CIERRE DE CAJA ===
+        function actualizarFechaCierre() {
+            const hoy = new Date();
+            document.getElementById('cierre-fecha').textContent = hoy.toLocaleDateString();
+            document.getElementById('cierre-cajero').textContent = cajeroActual;
+        }
+
+        async function hacerCierre() {
+            const snap = await db.collection('ventas').get();
+            let total = 0;
+            snap.forEach(d => total += d.data().total);
+            
+            document.getElementById('cierre-total').textContent = '$' + total.toFixed(2);
+            document.getElementById('cierre-cantidad').textContent = snap.size;
+
+            await db.collection('cierres').add({
+                fecha: new Date().toLocaleDateString(),
+                cajero: cajeroActual,
+                total,
+                cantidadVentas: snap.size,
+                fechaHora: new Date()
+            });
+
+            alert('✅ Cierre realizado y guardado');
+            cargarHistorialCierres();
+        }
+
+        async function reiniciarCierre() {
+            if (!confirm('⚠️ ¿Borrar todas las ventas del día?')) return;
+            const snap = await db.collection('ventas').get();
+            const batch = db.batch();
+            snap.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            alert('✅ Reiniciado');
+            document.getElementById('cierre-total').textContent = '$0.00';
+            document.getElementById('cierre-cantidad').textContent = '0';
+            cargarCatalogo();
+            cargarReportes();
+        }
+
+        async function cargarHistorialCierres() {
+            const snap = await db.collection('cierres').orderBy('fechaHora', 'desc').limit(10).get();
+            const cuerpo = document.getElementById('cuerpoCierres');
+            cuerpo.innerHTML = '';
+            snap.forEach(doc => {
+                const c = doc.data();
+                cuerpo.innerHTML += `
+                    <tr>
+                        <td>${c.fecha}</td><td>${c.cajero}</td><td>$${c.total.toFixed(2)}</td><td>${c.cantidadVentas}</td>
+                    </tr>`;
+            });
+        }
+    </script>
 </body>
 </html>
