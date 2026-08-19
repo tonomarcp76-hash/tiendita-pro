@@ -14,7 +14,6 @@
         body { background: var(--fondo); min-height: 100vh; }
         .oculto { display: none !important; }
         
-        /* === PANTALLA DE ENTRADA === */
         .entrada-container {
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
@@ -41,7 +40,6 @@
         .btn:active { transform: scale(0.98); }
         .btn-primario { background: var(--primario); color: white; }
         
-        /* === SISTEMA PRINCIPAL === */
         .header {
             background: var(--blanco); padding: 15px 30px; display: flex;
             justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
@@ -78,17 +76,16 @@
         th { background: #f8fafc; font-weight: 600; }
         .total-grande { font-size: 32px; font-weight: 700; color: var(--exito); text-align: right; margin-top: 20px; }
         .usuario-actual { font-weight: 600; color: var(--primario); }
+        .mensaje { padding: 10px; border-radius: 6px; margin: 10px 0; display: none; }
+        .mensaje.exito { background: #dcfce7; color: #166534; display: block; }
+        .mensaje.error { background: #fecaca; color: #991b1b; display: block; }
     </style>
 
-    <!-- === FIREBASE === -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-    <!-- ====================================== -->
-    <!-- PANTALLA DE ENTRADA (SIN CONTRASEÑA) -->
-    <!-- ====================================== -->
     <div class="entrada-container" id="pantallaEntrada">
         <div class="entrada-card">
             <h1>🏪 TIENDITA - PUNTO DE VENTA</h1>
@@ -101,9 +98,6 @@
         </div>
     </div>
 
-    <!-- ====================================== -->
-    <!-- SISTEMA PRINCIPAL -->
-    <!-- ====================================== -->
     <div id="sistemaPrincipal" class="oculto">
         <header class="header">
             <h2>🏪 Tiendita - Punto de Venta</h2>
@@ -129,7 +123,7 @@
                     <div class="fila">
                         <div class="campo">
                             <label>Buscar Producto</label>
-                            <input type="text" id="buscarProducto" placeholder="Escribe nombre..." oninput="buscarEnCatalogo()">
+                            <input type="text" id="buscarProducto" placeholder="Escribe nombre...">
                         </div>
                         <div class="campo">
                             <label>Cantidad</label>
@@ -137,14 +131,11 @@
                         </div>
                         <button class="btn-accion btn-verde" onclick="agregarAVenta()">➕ Agregar</button>
                     </div>
-                    
                     <table id="tablaVenta">
                         <thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th>Acción</th></tr></thead>
                         <tbody id="cuerpoVenta"></tbody>
                     </table>
-                    
                     <div class="total-grande">Total: $<span id="totalVenta">0.00</span></div>
-                    
                     <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap;">
                         <button class="btn-accion btn-verde" style="font-size:18px; padding:15px 30px;" onclick="cobrarVenta()">💵 COBRAR E IMPRIMIR TICKET</button>
                         <button class="btn-accion btn-azul" style="font-size:18px; padding:15px 30px;" onclick="abrirCaja()">🔓 ABRIR CAJA</button>
@@ -153,50 +144,48 @@
                 </div>
             </div>
 
-            <!-- ===== CATÁLOGO (CORREGIDO - AHORA SÍ GUARDA) ===== -->
+            <!-- ===== CATÁLOGO - AHORA SÍ FUNCIONA ===== -->
             <div class="vista" id="vista-catalogo">
                 <div class="tarjeta">
                     <h2>📦 Catálogo de Productos</h2>
+                    
+                    <!-- MENSAJE DE CONFIRMACIÓN/ERROR -->
+                    <div id="mensajeCatalogo" class="mensaje"></div>
+                    
                     <div class="fila">
                         <div class="campo">
-                            <label>Nombre del Producto</label>
+                            <label>Nombre del Producto *</label>
                             <input type="text" id="prodNombre" placeholder="Ej: Pan dulce">
                         </div>
                         <div class="campo">
-                            <label>Precio de Venta ($)</label>
-                            <input type="number" id="prodPrecio" step="0.01" min="0" placeholder="0.00">
+                            <label>Precio de Venta ($) *</label>
+                            <input type="number" id="prodPrecio" step="0.01" min="0" placeholder="15.50">
                         </div>
                         <div class="campo">
                             <label>Stock Inicial</label>
-                            <input type="number" id="prodStock" min="0" placeholder="0">
+                            <input type="number" id="prodStock" min="0" placeholder="50">
                         </div>
                         <button class="btn-accion btn-verde" onclick="guardarProducto()">💾 GUARDAR PRODUCTO</button>
                     </div>
+                    
                     <table id="tablaCatalogo">
                         <thead><tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
-                        <tbody id="cuerpoCatalogo"></tbody>
+                        <tbody id="cuerpoCatalogo">
+                            <tr><td colspan="4" style="text-align:center; color:var(--gris); padding:20px;">Cargando productos...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ===== COMPRAS (INCLUIDA) ===== -->
+            <!-- ===== COMPRAS ===== -->
             <div class="vista" id="vista-compras">
                 <div class="tarjeta">
                     <h2>📥 Registro de Compras / Entradas</h2>
                     <div class="fila">
-                        <div class="campo">
-                            <label>Nombre del Producto</label>
-                            <input type="text" id="compraNombre" placeholder="Ej: Pan dulce">
-                        </div>
-                        <div class="campo">
-                            <label>Cantidad Comprada</label>
-                            <input type="number" id="compraCantidad" min="1" placeholder="1">
-                        </div>
-                        <div class="campo">
-                            <label>Precio de Compra ($)</label>
-                            <input type="number" id="compraPrecio" step="0.01" min="0" placeholder="0.00">
-                        </div>
-                        <button class="btn-accion btn-verde" onclick="registrarCompra()">✅ REGISTRAR COMPRA</button>
+                        <div class="campo"><label>Producto</label><input type="text" id="compraNombre" placeholder="Nombre del producto"></div>
+                        <div class="campo"><label>Cantidad</label><input type="number" id="compraCantidad" min="1" placeholder="1"></div>
+                        <div class="campo"><label>Precio Compra</label><input type="number" id="compraPrecio" step="0.01" placeholder="0.00"></div>
+                        <button class="btn-accion btn-verde" onclick="registrarCompra()">✅ Registrar Compra</button>
                     </div>
                     <table id="tablaCompras">
                         <thead><tr><th>Fecha</th><th>Hora</th><th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Total</th><th>Cajero</th></tr></thead>
@@ -232,7 +221,6 @@
                     </div>
                     <button class="btn-accion btn-verde" style="font-size:18px; padding:15px 30px;" onclick="hacerCierre()">✅ HACER CIERRE DE CAJA</button>
                     <button class="btn-accion btn-azul" style="font-size:18px; padding:15px 30px; margin-left:10px;" onclick="reiniciarCierre()">🔄 Reiniciar Conteo</button>
-                    
                     <h3 style="margin-top:40px; border-top:2px solid #eee; padding-top:20px;">📜 Historial de Cierres</h3>
                     <table id="tablaCierres">
                         <thead><tr><th>Fecha</th><th>Cajero</th><th>Total</th><th>Ventas</th></tr></thead>
@@ -243,11 +231,8 @@
         </main>
     </div>
 
-    <!-- ====================================== -->
-    <!-- JAVASCRIPT: FIREBASE + FUNCIONES -->
-    <!-- ====================================== -->
     <script>
-        // === CONFIGURACIÓN FIREBASE ===
+        // === CONFIGURA TUS DATOS DE FIREBASE AQUÍ ===
         const firebaseConfig = {
             apiKey: "AQUÍ-TU-API-KEY",
             authDomain: "tu-proyecto.firebaseapp.com",
@@ -263,75 +248,97 @@
         let carrito = [];
         let ventaTotal = 0;
 
+        // === MOSTRAR MENSAJE EN CATÁLOGO ===
+        function mostrarMensaje(texto, tipo = 'exito') {
+            const msg = document.getElementById('mensajeCatalogo');
+            msg.textContent = texto;
+            msg.className = `mensaje ${tipo}`;
+            setTimeout(() => { msg.className = 'mensaje'; }, 4000);
+        }
+
         // === ENTRAR AL SISTEMA ===
         function entrarAlSistema() {
             const nombre = document.getElementById('nombreCajero').value.trim();
             if (!nombre) return alert('⚠️ Escribe tu nombre para continuar');
-            
             cajeroActual = nombre;
             document.getElementById('pantallaEntrada').classList.add('oculto');
             document.getElementById('sistemaPrincipal').classList.remove('oculto');
             document.getElementById('nombreUsuario').textContent = '👤 ' + cajeroActual;
-            
             cargarCatalogo();
             cargarReportes();
             cargarHistorialCierres();
             actualizarFechaCierre();
         }
 
-        // === SALIR DEL SISTEMA ===
         function salirDelSistema() {
             if (!confirm('¿Seguro que quieres salir?')) return;
             document.getElementById('sistemaPrincipal').classList.add('oculto');
             document.getElementById('pantallaEntrada').classList.remove('oculto');
             document.getElementById('nombreCajero').value = '';
-            carrito = [];
-            ventaTotal = 0;
+            carrito = []; ventaTotal = 0;
         }
 
-        // === NAVEGACIÓN ===
         function mostrarVista(nombre) {
             document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('activo'));
             document.getElementById(`vista-${nombre}`).classList.add('activa');
             document.getElementById(`btn-nav-${nombre}`).classList.add('activo');
+            if (nombre === 'catalogo') cargarCatalogo();
+            if (nombre === 'compras') cargarCompras();
         }
 
-        // ========== CATÁLOGO: AHORA SÍ GUARDA ==========
+        // ==============================================
+        // 🔑 FUNCIÓN GUARDAR PRODUCTO - CORREGIDA
+        // ==============================================
         async function guardarProducto() {
             const nombre = document.getElementById('prodNombre').value.trim();
             const precio = parseFloat(document.getElementById('prodPrecio').value);
             const stock = parseInt(document.getElementById('prodStock').value) || 0;
-            
-            if (!nombre) return alert('⚠️ Escribe el nombre del producto');
-            if (!precio || precio <= 0) return alert('⚠️ Escribe un precio válido');
-            
+
+            // VALIDACIONES
+            if (!nombre) return mostrarMensaje('⚠️ Escribe el nombre del producto', 'error');
+            if (!precio || precio <= 0) return mostrarMensaje('⚠️ Escribe un precio válido mayor a 0', 'error');
+
             try {
+                console.log('Guardando producto:', { nombre, precio, stock });
+                
+                // GUARDAR EN FIREBASE
                 await db.collection('productos').add({
                     nombre: nombre,
                     precio: precio,
                     stock: stock
                 });
-                alert('✅ Producto guardado correctamente!');
+
+                mostrarMensaje('✅ Producto guardado correctamente!', 'exito');
+                
+                // LIMPIAR CAMPOS
                 document.getElementById('prodNombre').value = '';
                 document.getElementById('prodPrecio').value = '';
                 document.getElementById('prodStock').value = '';
+
+                // RECARGAR TABLA
                 cargarCatalogo();
+
             } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Error al guardar: ' + error.message + '\nRevisa las reglas de Firestore.');
+                console.error('❌ Error guardando:', error);
+                mostrarMensaje('❌ Error: ' + error.message + ' — Revisa las reglas de Firestore', 'error');
             }
         }
 
+        // === CARGAR CATÁLOGO ===
         async function cargarCatalogo() {
             const cuerpo = document.getElementById('cuerpoCatalogo');
-            cuerpo.innerHTML = '';
+            cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
+            
             try {
                 const snap = await db.collection('productos').orderBy('nombre').get();
+                cuerpo.innerHTML = '';
+                
                 if (snap.empty) {
-                    cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--gris);">No hay productos registrados</td></tr>';
+                    cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--gris); padding:20px;">No hay productos. ¡Agrega el primero!</td></tr>';
                     return;
                 }
+
                 snap.forEach(doc => {
                     const p = doc.data();
                     cuerpo.innerHTML += `
@@ -345,8 +352,8 @@
                         </tr>`;
                 });
             } catch (error) {
-                cuerpo.innerHTML = '<tr><td colspan="4" style="color:red;">Error cargando productos</td></tr>';
-                console.error(error);
+                cuerpo.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">❌ Error cargando: ${error.message}</td></tr>`;
+                console.error('Error cargando:', error);
             }
         }
 
@@ -354,17 +361,14 @@
             if (!confirm('¿Eliminar este producto?')) return;
             try {
                 await db.collection('productos').doc(id).delete();
-                alert('✅ Producto eliminado');
+                mostrarMensaje('✅ Producto eliminado', 'exito');
                 cargarCatalogo();
             } catch (error) {
-                alert('❌ Error al eliminar: ' + error.message);
+                mostrarMensaje('❌ Error al eliminar: ' + error.message, 'error');
             }
         }
 
-        // === BUSCAR PRODUCTO ===
-        function buscarEnCatalogo() {}
-
-        // === AGREGAR A VENTA ===
+        // === VENTAS ===
         async function agregarAVenta() {
             const nombre = document.getElementById('buscarProducto').value.trim();
             const cantidad = parseInt(document.getElementById('cantidadVenta').value) || 1;
@@ -400,21 +404,11 @@
             document.getElementById('totalVenta').textContent = ventaTotal.toFixed(2);
         }
 
-        function quitarDelCarrito(idx) {
-            carrito.splice(idx, 1);
-            actualizarTablaVenta();
-        }
+        function quitarDelCarrito(idx) { carrito.splice(idx, 1); actualizarTablaVenta(); }
+        function limpiarVenta() { carrito = []; ventaTotal = 0; actualizarTablaVenta(); }
 
-        function limpiarVenta() {
-            carrito = [];
-            ventaTotal = 0;
-            actualizarTablaVenta();
-        }
-
-        // === COBRAR VENTA ===
         async function cobrarVenta() {
             if (carrito.length === 0) return alert('⚠️ Agrega productos primero');
-            
             const fecha = new Date();
             const datosVenta = {
                 fecha: fecha.toLocaleDateString(),
@@ -423,10 +417,7 @@
                 productos: carrito,
                 total: ventaTotal
             };
-
             await db.collection('ventas').add(datosVenta);
-
-            // Descontar stock
             for (const item of carrito) {
                 const snap = await db.collection('productos').doc(item.id).get();
                 if (snap.exists) {
@@ -434,7 +425,6 @@
                     await db.collection('productos').doc(item.id).update({ stock: stockActual - item.cantidad });
                 }
             }
-
             abrirCaja();
             imprimirTicket(datosVenta);
             alert('✅ Venta realizada con éxito!');
@@ -443,11 +433,7 @@
             cargarReportes();
         }
 
-        function abrirCaja() {
-            console.log('🔓 Caja abierta');
-            alert('🔓 Caja registradora abierta');
-        }
-
+        function abrirCaja() { alert('🔓 Caja registradora abierta'); }
         function imprimirTicket(venta) {
             let ticket = `
 ====================================
@@ -472,38 +458,27 @@ TOTAL: $${venta.total.toFixed(2)}
             window.print();
         }
 
-        // ========== COMPRAS ==========
+        // === COMPRAS ===
         async function registrarCompra() {
             const nombre = document.getElementById('compraNombre').value.trim();
             const cantidad = parseInt(document.getElementById('compraCantidad').value);
             const precio = parseFloat(document.getElementById('compraPrecio').value);
-            
             if (!nombre || !cantidad || !precio) return alert('⚠️ Completa todos los campos');
-            
             const fecha = new Date();
             const total = cantidad * precio;
-            
             await db.collection('compras').add({
                 fecha: fecha.toLocaleDateString(),
                 hora: fecha.toLocaleTimeString(),
-                nombre, cantidad, precioUnitario: precio, total,
-                cajero: cajeroActual
+                nombre, cantidad, precioUnitario: precio, total, cajero: cajeroActual
             });
-
-            // Actualizar stock
             const snap = await db.collection('productos').where('nombre', '==', nombre).get();
             if (!snap.empty) {
                 const doc = snap.docs[0];
                 const stockActual = doc.data().stock || 0;
                 await db.collection('productos').doc(doc.id).update({ stock: stockActual + cantidad });
             } else {
-                await db.collection('productos').add({ 
-                    nombre, 
-                    precio: Math.round(precio * 1.2 * 100) / 100, 
-                    stock: cantidad 
-                });
+                await db.collection('productos').add({ nombre, precio: Math.round(precio * 1.2 * 100) / 100, stock: cantidad });
             }
-
             alert('✅ Compra registrada y stock actualizado');
             document.getElementById('compraNombre').value = '';
             document.getElementById('compraCantidad').value = '';
@@ -557,18 +532,13 @@ TOTAL: $${venta.total.toFixed(2)}
             const snap = await db.collection('ventas').get();
             let total = 0;
             snap.forEach(d => total += d.data().total);
-            
             document.getElementById('cierre-total').textContent = '$' + total.toFixed(2);
             document.getElementById('cierre-cantidad').textContent = snap.size;
-
             await db.collection('cierres').add({
                 fecha: new Date().toLocaleDateString(),
                 cajero: cajeroActual,
-                total,
-                cantidadVentas: snap.size,
-                fechaHora: new Date()
+                total, cantidadVentas: snap.size, fechaHora: new Date()
             });
-
             alert('✅ Cierre realizado y guardado');
             cargarHistorialCierres();
         }
