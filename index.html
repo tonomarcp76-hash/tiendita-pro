@@ -13,7 +13,7 @@
         }
         body { background: var(--fondo); min-height: 100vh; }
         .oculto { display: none !important; }
-        
+       
         .entrada-container {
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
@@ -39,10 +39,10 @@
         }
         .btn:active { transform: scale(0.98); }
         .btn-primario { background: var(--primario); color: white; }
-        
+       
         .header {
             background: var(--blanco); padding: 15px 30px; display: flex;
-            justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
+            justify-content: space-between; align-items: center box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
         }
         .nav-botones { display: flex; gap: 10px; flex-wrap: wrap; }
         .nav-btn {
@@ -79,9 +79,16 @@
         .mensaje { padding: 10px; border-radius: 6px; margin: 10px 0; display: none; }
         .mensaje.exito { background: #dcfce7; color: #166534; display: block; }
         .mensaje.error { background: #fecaca; color: #991b1b; display: block; }
+        .producto-imagen { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .producto-sin-imagen { 
+            width: 50px; height: 50px; background: #e2e8f0; border-radius: 4px; 
+            display: flex; align-items: center; justify-content: center; font-size: 20px; color: #94a3b8;
+        }
+        .vista-previa-imagen { width: 80px; height: 80px; object-fit: cover; margin-top: 8px; border-radius: 8px; display: none; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 </head>
 <body>
     <div class="entrada-container" id="pantallaEntrada">
@@ -127,7 +134,7 @@
                         <button class="btn-accion btn-verde" onclick="agregarAVenta()">➕ Agregar</button>
                     </div>
                     <table id="tablaVenta">
-                        <thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th>Acción</th></tr></thead>
+                        <thead><tr><th>Imagen</th><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th>Acción</th></tr></thead>
                         <tbody id="cuerpoVenta"></tbody>
                     </table>
                     <div class="total-grande">Total: $<span id="totalVenta">0.00</span></div>
@@ -156,12 +163,17 @@
                             <label>Stock Inicial</label>
                             <input type="number" id="prodStock" min="0" placeholder="50">
                         </div>
+                        <div class="campo">
+                            <label>Imagen del Producto</label>
+                            <input type="file" id="prodImagen" accept="image/*" onchange="previsualizarImagen(this)">
+                            <img id="vistaPreviaImagen" class="vista-previa-imagen" alt="Vista previa">
+                        </div>
                         <button class="btn-accion btn-verde" onclick="guardarProducto()">💾 GUARDAR PRODUCTO</button>
                     </div>
                     <table id="tablaCatalogo">
-                        <thead><tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>Imagen</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
                         <tbody id="cuerpoCatalogo">
-                            <tr><td colspan="4" style="text-align:center; color:var(--gris); padding:20px;">Cargando productos...</td></tr>
+                            <tr><td colspan="5" style="text-align:center; color:var(--gris); padding:20px;">Cargando productos...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -229,10 +241,26 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         let cajeroActual = '';
         let carrito = [];
         let ventaTotal = 0;
+
+        // === PREVISUALIZAR IMAGEN AL SELECCIONARLA ===
+        function previsualizarImagen(input) {
+            const vista = document.getElementById('vistaPreviaImagen');
+            if (input.files && input.files[0]) {
+                const lector = new FileReader();
+                lector.onload = e => {
+                    vista.src = e.target.result;
+                    vista.style.display = 'block';
+                };
+                lector.readAsDataURL(input.files[0]);
+            } else {
+                vista.style.display = 'none';
+            }
+        }
 
         // === MOSTRAR MENSAJE EN CATÁLOGO ===
         function mostrarMensaje(texto, tipo = 'exito') {
@@ -273,42 +301,67 @@
             if (nombre === 'compras') cargarCompras();
         }
 
-        // === GUARDAR PRODUCTO ===
+        // === GUARDAR PRODUCTO CON IMAGEN ===
         async function guardarProducto() {
             const nombre = document.getElementById('prodNombre').value.trim();
             const precio = parseFloat(document.getElementById('prodPrecio').value);
             const stock = parseInt(document.getElementById('prodStock').value) || 0;
-            
+            const imagenFile = document.getElementById('prodImagen').files[0];
+           
             if (!nombre) return mostrarMensaje('⚠️ Escribe el nombre del producto', 'error');
             if (!precio || precio <= 0) return mostrarMensaje('⚠️ Escribe un precio válido mayor a 0', 'error');
-            
+           
             try {
-                await db.collection('productos').add({ nombre, precio, stock });
+                let imagenUrl = '';
+                
+                // Si hay imagen, subirla a Firebase Storage
+                if (imagenFile) {
+                    const nombreImagen = `productos/${Date.now()}_${imagenFile.name}`;
+                    const refStorage = storage.ref(nombreImagen);
+                    await refStorage.put(imagenFile);
+                    imagenUrl = await refStorage.getDownloadURL();
+                }
+                
+                // Guardar producto con URL de imagen
+                await db.collection('productos').add({ 
+                    nombre, 
+                    precio, 
+                    stock, 
+                    imagen: imagenUrl 
+                });
+                
                 mostrarMensaje('✅ Producto guardado correctamente!', 'exito');
                 document.getElementById('prodNombre').value = '';
                 document.getElementById('prodPrecio').value = '';
                 document.getElementById('prodStock').value = '';
+                document.getElementById('prodImagen').value = '';
+                document.getElementById('vistaPreviaImagen').style.display = 'none';
                 cargarCatalogo();
             } catch (error) {
                 mostrarMensaje('❌ Error: ' + error.message, 'error');
             }
         }
 
-        // === CARGAR CATÁLOGO ===
+        // === CARGAR CATÁLOGO CON IMAGENES ===
         async function cargarCatalogo() {
             const cuerpo = document.getElementById('cuerpoCatalogo');
-            cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
+            cuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
             try {
                 const snap = await db.collection('productos').orderBy('nombre').get();
                 cuerpo.innerHTML = '';
                 if (snap.empty) {
-                    cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--gris); padding:20px;">No hay productos. ¡Agrega el primero!</td></tr>';
+                    cuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--gris); padding:20px;">No hay productos. ¡Agrega el primero!</td></tr>';
                     return;
                 }
                 snap.forEach(doc => {
                     const p = doc.data();
+                    const imagenHtml = p.imagen 
+                        ? `<img src="${p.imagen}" class="producto-imagen" alt="${p.nombre}">`
+                        : `<div class="producto-sin-imagen">📦</div>`;
+                    
                     cuerpo.innerHTML += `
                         <tr>
+                            <td>${imagenHtml}</td>
                             <td>${p.nombre}</td>
                             <td>$${p.precio.toFixed(2)}</td>
                             <td>${p.stock || 0}</td>
@@ -318,7 +371,7 @@
                         </tr>`;
                 });
             } catch (error) {
-                cuerpo.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">❌ Error cargando: ${error.message}</td></tr>`;
+                cuerpo.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">❌ Error cargando: ${error.message}</td></tr>`;
             }
         }
 
@@ -333,19 +386,26 @@
             }
         }
 
-        // === VENTAS ===
+        // === VENTAS CON IMAGENES ===
         async function agregarAVenta() {
             const nombre = document.getElementById('buscarProducto').value.trim();
             const cantidad = parseInt(document.getElementById('cantidadVenta').value) || 1;
             if (!nombre) return alert('Escribe el nombre del producto');
-            
+           
             const snap = await db.collection('productos').where('nombre', '==', nombre).get();
             if (snap.empty) return alert('⚠️ Producto no encontrado');
-            
+           
             snap.forEach(doc => {
                 const prod = doc.data();
                 const subtotal = prod.precio * cantidad;
-                carrito.push({ id: doc.id, nombre: prod.nombre, precio: prod.precio, cantidad, subtotal });
+                carrito.push({ 
+                    id: doc.id, 
+                    nombre: prod.nombre, 
+                    precio: prod.precio, 
+                    cantidad, 
+                    subtotal,
+                    imagen: prod.imagen || ''
+                });
                 actualizarTablaVenta();
             });
             document.getElementById('buscarProducto').value = '';
@@ -357,8 +417,13 @@
             ventaTotal = 0;
             carrito.forEach((item, idx) => {
                 ventaTotal += item.subtotal;
+                const imagenHtml = item.imagen 
+                    ? `<img src="${item.imagen}" class="producto-imagen" alt="${item.nombre}">`
+                    : `<div class="producto-sin-imagen">📦</div>`;
+                
                 cuerpo.innerHTML += `
                     <tr>
+                        <td>${imagenHtml}</td>
                         <td>${item.nombre}</td>
                         <td>$${item.precio.toFixed(2)}</td>
                         <td>${item.cantidad}</td>
@@ -443,7 +508,12 @@ TOTAL: $${venta.total.toFixed(2)}
                 const stockActual = doc.data().stock || 0;
                 await db.collection('productos').doc(doc.id).update({ stock: stockActual + cantidad });
             } else {
-                await db.collection('productos').add({ nombre, precio: Math.round(precio * 1.2 * 100) / 100, stock: cantidad });
+                await db.collection('productos').add({ 
+                    nombre, 
+                    precio: Math.round(precio * 1.2 * 100) / 100, 
+                    stock: cantidad,
+                    imagen: ''
+                });
             }
             alert('✅ Compra registrada y stock actualizado');
             document.getElementById('compraNombre').value = '';
@@ -487,7 +557,7 @@ TOTAL: $${venta.total.toFixed(2)}
             document.getElementById('cantidadVentas').textContent = snap.size;
         }
 
-        // === CIERRE DE CAJA ===
+        // === CIERRE DE CAJA CON REINICIO AUTOMÁTICO ===
         function actualizarFechaCierre() {
             const hoy = new Date();
             document.getElementById('cierre-fecha').textContent = hoy.toLocaleDateString();
@@ -500,13 +570,28 @@ TOTAL: $${venta.total.toFixed(2)}
             snap.forEach(d => total += d.data().total);
             document.getElementById('cierre-total').textContent = '$' + total.toFixed(2);
             document.getElementById('cierre-cantidad').textContent = snap.size;
+            
             await db.collection('cierres').add({
                 fecha: new Date().toLocaleDateString(),
                 cajero: cajeroActual,
                 total, cantidadVentas: snap.size, fechaHora: new Date()
             });
-            alert('✅ Cierre realizado y guardado');
+            
+            // ✅ REINICIO AUTOMÁTICO DESPUÉS DEL CIERRE
+            if (!confirm(`¿Confirmar cierre?\nVentas: ${snap.size}\nTotal: $${total.toFixed(2)}\n\n⚠️ Se borrarán las ventas del día y se reiniciará el conteo.`)) return;
+            
+            const batch = db.batch();
+            snap.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            
+            // ✅ Reiniciar valores en pantalla
+            document.getElementById('cierre-total').textContent = '$0.00';
+            document.getElementById('cierre-cantidad').textContent = '0';
+            
+            alert('✅ Cierre realizado y conteo reiniciado automáticamente');
             cargarHistorialCierres();
+            cargarCatalogo();
+            cargarReportes();
         }
 
         async function reiniciarCierre() {
