@@ -14,37 +14,31 @@
         body { background: var(--fondo); min-height: 100vh; }
         .oculto { display: none !important; }
         
-        .auth-container {
+        .entrada-container {
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
             background: linear-gradient(135deg, var(--primario), var(--secundario));
             padding: 20px;
         }
-        .auth-card {
-            background: var(--blanco); padding: 40px; border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 420px; text-align: center;
+        .entrada-card {
+            background: var(--blanco); padding: 50px 40px; border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 450px; text-align: center;
         }
-        .auth-card h1 { color: var(--primario); margin-bottom: 5px; font-size: 28px; }
-        .auth-card p { color: var(--gris); margin-bottom: 25px; font-size: 15px; }
-        .grupo-input { margin-bottom: 18px; text-align: left; }
-        .grupo-input label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--texto); font-size: 14px; }
+        .entrada-card h1 { color: var(--primario); margin-bottom: 10px; font-size: 32px; }
+        .entrada-card p { color: var(--gris); margin-bottom: 30px; font-size: 16px; }
+        .grupo-input { margin-bottom: 25px; text-align: left; }
+        .grupo-input label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--texto); }
         .grupo-input input {
-            width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;
-            font-size: 15px; transition: border-color 0.3s;
+            width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-size: 16px; transition: border-color 0.3s;
         }
         .grupo-input input:focus { outline: none; border-color: var(--primario); }
         .btn {
-            width: 100%; padding: 14px; border: none; border-radius: 8px;
-            font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;
+            width: 100%; padding: 16px; border: none; border-radius: 8px;
+            font-size: 18px; font-weight: 600; cursor: pointer; transition: transform 0.2s;
         }
         .btn:active { transform: scale(0.98); }
         .btn-primario { background: var(--primario); color: white; }
-        .btn-verde { background: var(--exito); color: white; margin-bottom: 10px; }
-        .btn-texto { background: none; color: var(--primario); padding: 8px; font-size: 14px; margin-top: 5px; }
-        .btn-texto:hover { text-decoration: underline; }
-        .mensaje-auth { padding: 10px; border-radius: 6px; margin: 12px 0; font-size: 14px; display: none; }
-        .mensaje-auth.exito { background: #dcfce7; color: #166534; display: block; }
-        .mensaje-auth.error { background: #fecaca; color: #991b1b; display: block; }
         
         .header {
             background: var(--blanco); padding: 15px 30px; display: flex;
@@ -70,7 +64,7 @@
             width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 15px;
         }
         .btn-accion {
-            padding: 10px 16px; border: none; border-radius: 6px cursor: pointer;
+            padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer;
             font-weight: 600; margin-right: 8px; margin-bottom: 8px;
         }
         .btn-verde { background: var(--exito); color: white; }
@@ -87,59 +81,26 @@
         .mensaje.error { background: #fecaca; color: #991b1b; display: block; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-
-    <!-- ===== PANTALLA DE AUTENTICACIÓN ===== -->
-    <div class="auth-container" id="pantallaAuth">
-        <div class="auth-card">
-            <h1>🏪 TIENDITA</h1>
-            <p id="subtituloAuth">Inicia sesión para continuar</p>
-            <div id="mensajeAuth" class="mensaje-auth"></div>
-
-            <!-- FORMULARIO DE INICIO DE SESIÓN -->
-            <div id="formLogin">
-                <div class="grupo-input">
-                    <label>Nombre de Usuario</label>
-                    <input type="text" id="usuarioLogin" placeholder="Tu nombre de usuario">
-                </div>
-                <div class="grupo-input">
-                    <label>Contraseña</label>
-                    <input type="password" id="passLogin" placeholder="Tu contraseña">
-                </div>
-                <button class="btn btn-primario" onclick="iniciarSesion()">🔑 INICIAR SESIÓN</button>
-                <button class="btn btn-texto" onclick="mostrarRegistro()">¿No tienes cuenta? Regístrate aquí</button>
+    <div class="entrada-container" id="pantallaEntrada">
+        <div class="entrada-card">
+            <h1>🏪 TIENDITA - PUNTO DE VENTA</h1>
+            <p>Escribe tu nombre para comenzar</p>
+            <div class="grupo-input">
+                <label>Nombre del Cajero</label>
+                <input type="text" id="nombreCajero" placeholder="Escribe tu nombre aquí..." autocomplete="off">
             </div>
-
-            <!-- FORMULARIO DE REGISTRO -->
-            <div id="formRegistro" class="oculto">
-                <div class="grupo-input">
-                    <label>Tu Nombre Completo</label>
-                    <input type="text" id="nombreCompleto" placeholder="Ej: Juan Pérez">
-                </div>
-                <div class="grupo-input">
-                    <label>Nombre de Usuario</label>
-                    <input type="text" id="usuarioRegistro" placeholder="Ej: cajero_juan">
-                </div>
-                <div class="grupo-input">
-                    <label>Contraseña (mínimo 6 caracteres)</label>
-                    <input type="password" id="passRegistro" placeholder="Crea una contraseña">
-                </div>
-                <button class="btn btn-verde" onclick="registrarUsuario()">✅ CREAR CUENTA</button>
-                <button class="btn btn-texto" onclick="mostrarLogin()">¿Ya tienes cuenta? Inicia sesión</button>
-            </div>
+            <button class="btn btn-primario" onclick="entrarAlSistema()">🚀 ENTRAR AL SISTEMA</button>
         </div>
     </div>
-
-    <!-- ===== SISTEMA PRINCIPAL ===== -->
     <div id="sistemaPrincipal" class="oculto">
         <header class="header">
             <h2>🏪 Tiendita - Punto de Venta</h2>
             <div>
                 <span class="usuario-actual" id="nombreUsuario"></span>
-                <button class="nav-btn" onclick="cerrarSesion()" style="margin-left:15px;">🚪 Salir</button>
+                <button class="nav-btn" onclick="salirDelSistema()" style="margin-left:15px;">🚪 Salir</button>
             </div>
         </header>
         <nav class="header" style="justify-content: center; gap:10px; flex-wrap: wrap;">
@@ -256,151 +217,53 @@
             </div>
         </main>
     </div>
-
     <script>
-        // === CONFIGURA TUS DATOS DE FIREBASE AQUÍ ===
+        // === TUS DATOS DE FIREBASE YA LISTOS ===
         const firebaseConfig = {
-            apiKey: "AQUÍ-TU-API-KEY",
-            authDomain: "tu-proyecto.firebaseapp.com",
-            projectId: "tu-proyecto",
-            storageBucket: "tu-proyecto.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abc123def456"
+            apiKey: "AIzaSyBe9azlihBNWElzWGwIqCOjtZu_MfDmkvQ",
+            authDomain: "tiendita-pro-5043e.firebaseapp.com",
+            projectId: "tiendita-pro-5043e",
+            storageBucket: "tiendita-pro-5043e.firebasestorage.app",
+            messagingSenderId: "695566679797",
+            appId: "1:695566679797:web:5b53169c39361dc4e2cfbc"
         };
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
 
         let cajeroActual = '';
         let carrito = [];
         let ventaTotal = 0;
 
-        // === MOSTRAR MENSAJES ===
-        function mostrarMensajeAuth(texto, tipo = 'error') {
-            const msg = document.getElementById('mensajeAuth');
-            msg.textContent = texto;
-            msg.className = `mensaje-auth ${tipo}`;
-            setTimeout(() => msg.className = 'mensaje-auth', 5000);
-        }
+        // === MOSTRAR MENSAJE EN CATÁLOGO ===
         function mostrarMensaje(texto, tipo = 'exito') {
             const msg = document.getElementById('mensajeCatalogo');
             msg.textContent = texto;
             msg.className = `mensaje ${tipo}`;
-            setTimeout(() => msg.className = 'mensaje', 4000);
+            setTimeout(() => { msg.className = 'mensaje'; }, 4000);
         }
 
-        // === CAMBIAR ENTRE FORMULARIOS ===
-        function mostrarRegistro() {
-            document.getElementById('formLogin').classList.add('oculto');
-            document.getElementById('formRegistro').classList.remove('oculto');
-            document.getElementById('subtituloAuth').textContent = 'Crea tu cuenta de cajero';
-            document.getElementById('mensajeAuth').className = 'mensaje-auth';
-        }
-        function mostrarLogin() {
-            document.getElementById('formRegistro').classList.add('oculto');
-            document.getElementById('formLogin').classList.remove('oculto');
-            document.getElementById('subtituloAuth').textContent = 'Inicia sesión para continuar';
-            document.getElementById('mensajeAuth').className = 'mensaje-auth';
-        }
-
-        // ✅ REGISTRAR NUEVO USUARIO
-        async function registrarUsuario() {
-            const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
-            const usuario = document.getElementById('usuarioRegistro').value.trim().toLowerCase();
-            const pass = document.getElementById('passRegistro').value;
-
-            if (!nombreCompleto) return mostrarMensajeAuth('⚠️ Escribe tu nombre completo');
-            if (!usuario) return mostrarMensajeAuth('⚠️ Escribe tu nombre de usuario');
-            if (!pass || pass.length < 6) return mostrarMensajeAuth('⚠️ La contraseña debe tener al menos 6 caracteres');
-
-            try {
-                // Verificar si el usuario ya existe
-                const correo = `${usuario}@tiendita-local.com`;
-                const credenciales = await auth.createUserWithEmailAndPassword(correo, pass);
-                
-                // Guardar datos del usuario en Firestore
-                await db.collection('usuarios').doc(credenciales.user.uid).set({
-                    nombreCompleto: nombreCompleto,
-                    usuario: usuario,
-                    correo: correo,
-                    fechaRegistro: new Date()
-                });
-
-                mostrarMensajeAuth('✅ ¡Cuenta creada! Iniciando sesión...', 'exito');
-                document.getElementById('nombreCompleto').value = '';
-                document.getElementById('usuarioRegistro').value = '';
-                document.getElementById('passRegistro').value = '';
-            } catch (error) {
-                console.error('Error registro:', error);
-                if (error.code === 'auth/email-already-in-use') {
-                    mostrarMensajeAuth('⚠️ Este nombre de usuario ya está registrado');
-                } else {
-                    mostrarMensajeAuth('❌ Error: ' + error.message);
-                }
-            }
+        // === ENTRAR AL SISTEMA SOLO CON NOMBRE ===
+        function entrarAlSistema() {
+            const nombre = document.getElementById('nombreCajero').value.trim();
+            if (!nombre) return alert('⚠️ Escribe tu nombre para continuar');
+            cajeroActual = nombre;
+            document.getElementById('pantallaEntrada').classList.add('oculto');
+            document.getElementById('sistemaPrincipal').classList.remove('oculto');
+            document.getElementById('nombreUsuario').textContent = '👤 ' + cajeroActual;
+            cargarCatalogo();
+            cargarReportes();
+            cargarHistorialCierres();
+            actualizarFechaCierre();
         }
 
-        // 🔑 INICIAR SESIÓN
-        async function iniciarSesion() {
-            const usuario = document.getElementById('usuarioLogin').value.trim().toLowerCase();
-            const pass = document.getElementById('passLogin').value;
-
-            if (!usuario) return mostrarMensajeAuth('⚠️ Escribe tu nombre de usuario');
-            if (!pass) return mostrarMensajeAuth('⚠️ Escribe tu contraseña');
-
-            const correo = `${usuario}@tiendita-local.com`;
-            try {
-                await auth.signInWithEmailAndPassword(correo, pass);
-            } catch (error) {
-                console.error('Error login:', error);
-                mostrarMensajeAuth('❌ Usuario o contraseña incorrectos');
-            }
+        function salirDelSistema() {
+            if (!confirm('¿Seguro que quieres salir?')) return;
+            document.getElementById('sistemaPrincipal').classList.add('oculto');
+            document.getElementById('pantallaEntrada').classList.remove('oculto');
+            document.getElementById('nombreCajero').value = '';
+            carrito = []; ventaTotal = 0;
         }
 
-        // 🚪 CERRAR SESIÓN
-        async function cerrarSesion() {
-            if (!confirm('¿Cerrar sesión?')) return;
-            await auth.signOut();
-            carrito = [];
-            ventaTotal = 0;
-            document.getElementById('passLogin').value = '';
-        }
-
-        // ✅ DETECTAR CAMBIOS DE SESIÓN
-        auth.onAuthStateChanged(async (usuario) => {
-            if (usuario) {
-                try {
-                    // Cargar datos del usuario desde Firestore
-                    const doc = await db.collection('usuarios').doc(usuario.uid).get();
-                    if (doc.exists) {
-                        const datos = doc.data();
-                        cajeroActual = datos.nombreCompleto;
-                    } else {
-                        cajeroActual = 'Cajero';
-                    }
-                    
-                    // Mostrar sistema
-                    document.getElementById('pantallaAuth').classList.add('oculto');
-                    document.getElementById('sistemaPrincipal').classList.remove('oculto');
-                    document.getElementById('nombreUsuario').textContent = '👤 ' + cajeroActual;
-                    
-                    // Cargar datos iniciales
-                    cargarCatalogo();
-                    cargarReportes();
-                    cargarHistorialCierres();
-                    actualizarFechaCierre();
-                } catch (error) {
-                    console.error('Error cargando usuario:', error);
-                }
-            } else {
-                // Mostrar pantalla de login
-                document.getElementById('sistemaPrincipal').classList.add('oculto');
-                document.getElementById('pantallaAuth').classList.remove('oculto');
-                mostrarLogin();
-            }
-        });
-
-        // === NAVEGACIÓN ===
         function mostrarVista(nombre) {
             document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('activo'));
@@ -410,20 +273,18 @@
             if (nombre === 'compras') cargarCompras();
         }
 
-        // ==============================================
-        // 📦 MÓDULO CATÁLOGO
-        // ==============================================
+        // === GUARDAR PRODUCTO ===
         async function guardarProducto() {
             const nombre = document.getElementById('prodNombre').value.trim();
             const precio = parseFloat(document.getElementById('prodPrecio').value);
             const stock = parseInt(document.getElementById('prodStock').value) || 0;
             
             if (!nombre) return mostrarMensaje('⚠️ Escribe el nombre del producto', 'error');
-            if (!precio || precio <= 0) return mostrarMensaje('⚠️ Precio debe ser mayor a 0', 'error');
+            if (!precio || precio <= 0) return mostrarMensaje('⚠️ Escribe un precio válido mayor a 0', 'error');
             
             try {
                 await db.collection('productos').add({ nombre, precio, stock });
-                mostrarMensaje('✅ Producto guardado correctamente', 'exito');
+                mostrarMensaje('✅ Producto guardado correctamente!', 'exito');
                 document.getElementById('prodNombre').value = '';
                 document.getElementById('prodPrecio').value = '';
                 document.getElementById('prodStock').value = '';
@@ -432,6 +293,8 @@
                 mostrarMensaje('❌ Error: ' + error.message, 'error');
             }
         }
+
+        // === CARGAR CATÁLOGO ===
         async function cargarCatalogo() {
             const cuerpo = document.getElementById('cuerpoCatalogo');
             cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
@@ -458,6 +321,7 @@
                 cuerpo.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">❌ Error cargando: ${error.message}</td></tr>`;
             }
         }
+
         async function eliminarProducto(id) {
             if (!confirm('¿Eliminar este producto?')) return;
             try {
@@ -469,9 +333,7 @@
             }
         }
 
-        // ==============================================
-        // 🛒 MÓDULO VENTAS
-        // ==============================================
+        // === VENTAS ===
         async function agregarAVenta() {
             const nombre = document.getElementById('buscarProducto').value.trim();
             const cantidad = parseInt(document.getElementById('cantidadVenta').value) || 1;
@@ -488,6 +350,7 @@
             });
             document.getElementById('buscarProducto').value = '';
         }
+
         function actualizarTablaVenta() {
             const cuerpo = document.getElementById('cuerpoVenta');
             cuerpo.innerHTML = '';
@@ -505,8 +368,10 @@
             });
             document.getElementById('totalVenta').textContent = ventaTotal.toFixed(2);
         }
+
         function quitarDelCarrito(idx) { carrito.splice(idx, 1); actualizarTablaVenta(); }
         function limpiarVenta() { carrito = []; ventaTotal = 0; actualizarTablaVenta(); }
+
         async function cobrarVenta() {
             if (carrito.length === 0) return alert('⚠️ Agrega productos primero');
             const fecha = new Date();
@@ -532,7 +397,9 @@
             cargarCatalogo();
             cargarReportes();
         }
+
         function abrirCaja() { alert('🔓 Caja registradora abierta'); }
+
         function imprimirTicket(venta) {
             let ticket = `
 ====================================
@@ -557,9 +424,7 @@ TOTAL: $${venta.total.toFixed(2)}
             window.print();
         }
 
-        // ==============================================
-        // 📥 MÓDULO COMPRAS
-        // ==============================================
+        // === COMPRAS ===
         async function registrarCompra() {
             const nombre = document.getElementById('compraNombre').value.trim();
             const cantidad = parseInt(document.getElementById('compraCantidad').value);
@@ -587,6 +452,7 @@ TOTAL: $${venta.total.toFixed(2)}
             cargarCompras();
             cargarCatalogo();
         }
+
         async function cargarCompras() {
             const snap = await db.collection('compras').orderBy('fecha', 'desc').limit(20).get();
             const cuerpo = document.getElementById('cuerpoCompras');
@@ -602,9 +468,7 @@ TOTAL: $${venta.total.toFixed(2)}
             });
         }
 
-        // ==============================================
-        // 📊 MÓDULO REPORTES
-        // ==============================================
+        // === REPORTES ===
         async function cargarReportes() {
             const snap = await db.collection('ventas').orderBy('fecha', 'desc').limit(50).get();
             const cuerpo = document.getElementById('cuerpoReportes');
@@ -623,14 +487,13 @@ TOTAL: $${venta.total.toFixed(2)}
             document.getElementById('cantidadVentas').textContent = snap.size;
         }
 
-        // ==============================================
-        // 💰 MÓDULO CIERRE DE CAJA
-        // ==============================================
+        // === CIERRE DE CAJA ===
         function actualizarFechaCierre() {
             const hoy = new Date();
             document.getElementById('cierre-fecha').textContent = hoy.toLocaleDateString();
             document.getElementById('cierre-cajero').textContent = cajeroActual;
         }
+
         async function hacerCierre() {
             const snap = await db.collection('ventas').get();
             let total = 0;
@@ -645,6 +508,7 @@ TOTAL: $${venta.total.toFixed(2)}
             alert('✅ Cierre realizado y guardado');
             cargarHistorialCierres();
         }
+
         async function reiniciarCierre() {
             if (!confirm('⚠️ ¿Borrar todas las ventas del día?')) return;
             const snap = await db.collection('ventas').get();
@@ -657,6 +521,7 @@ TOTAL: $${venta.total.toFixed(2)}
             cargarCatalogo();
             cargarReportes();
         }
+
         async function cargarHistorialCierres() {
             const snap = await db.collection('cierres').orderBy('fechaHora', 'desc').limit(10).get();
             const cuerpo = document.getElementById('cuerpoCierres');
