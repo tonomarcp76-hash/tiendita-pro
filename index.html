@@ -42,7 +42,7 @@
        
         .header {
             background: var(--blanco); padding: 15px 30px; display: flex;
-            justify-content: space-between; align-items: center box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
+            justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap;
         }
         .nav-botones { display: flex; gap: 10px; flex-wrap: wrap; }
         .nav-btn {
@@ -138,10 +138,9 @@
                         <tbody id="cuerpoVenta"></tbody>
                     </table>
                     <div class="total-grande">Total: $<span id="totalVenta">0.00</span></div>
+                    <!-- ✅ SOLO BOTÓN DE COBRAR — SIN ABRIR CAJA NI NUEVA VENTA -->
                     <div style="margin-top:25px; display:flex; gap:15px; flex-wrap:wrap;">
                         <button class="btn-accion btn-verde" style="font-size:18px; padding:15px 30px;" onclick="cobrarVenta()">💵 COBRAR E IMPRIMIR TICKET</button>
-                        <button class="btn-accion btn-azul" style="font-size:18px; padding:15px 30px;" onclick="abrirCaja()">🔓 ABRIR CAJA</button>
-                        <button class="btn-accion btn-naranja" style="font-size:18px; padding:15px 30px;" onclick="limpiarVenta()">🗑️ NUEVA VENTA</button>
                     </div>
                 </div>
             </div>
@@ -208,7 +207,7 @@
                     </table>
                 </div>
             </div>
-            <!-- ===== CIERRE DE CAJA ===== -->
+            <!-- ===== CIERRE DE CAJA — SIN BOTÓN DE REINICIAR ===== -->
             <div class="vista" id="vista-cierre">
                 <div class="tarjeta">
                     <h2>💰 Cierre de Caja</h2>
@@ -218,8 +217,9 @@
                         <p><strong>Total Ventas del Día:</strong> <span id="cierre-total" style="color:var(--exito); font-weight:bold;">$0.00</span></p>
                         <p><strong>Ventas Realizadas:</strong> <span id="cierre-cantidad">0</span></p>
                     </div>
+                    <!-- ✅ SOLO BOTÓN DE HACER CIERRE — SIN REINICIAR CONTEO -->
                     <button class="btn-accion btn-verde" style="font-size:18px; padding:15px 30px;" onclick="hacerCierre()">✅ HACER CIERRE DE CAJA</button>
-                    <button class="btn-accion btn-azul" style="font-size:18px; padding:15px 30px; margin-left:10px;" onclick="reiniciarCierre()">🔄 Reiniciar Conteo</button>
+                    
                     <h3 style="margin-top:40px; border-top:2px solid #eee; padding-top:20px;">📜 Historial de Cierres</h3>
                     <table id="tablaCierres">
                         <thead><tr><th>Fecha</th><th>Cajero</th><th>Total</th><th>Ventas</th></tr></thead>
@@ -435,10 +435,20 @@
         }
 
         function quitarDelCarrito(idx) { carrito.splice(idx, 1); actualizarTablaVenta(); }
-        function limpiarVenta() { carrito = []; ventaTotal = 0; actualizarTablaVenta(); }
+        
+        // === ✅ LIMPIAR VENTA AUTOMÁTICAMENTE ===
+        function limpiarVenta() {
+            carrito = [];
+            ventaTotal = 0;
+            actualizarTablaVenta();
+            document.getElementById('buscarProducto').value = '';
+            document.getElementById('cantidadVenta').value = '1';
+        }
 
+        // === ✅ COBRAR — IMPRIMIR — PONER EN CEROS AUTOMÁTICAMENTE ===
         async function cobrarVenta() {
             if (carrito.length === 0) return alert('⚠️ Agrega productos primero');
+            
             const fecha = new Date();
             const datosVenta = {
                 fecha: fecha.toLocaleDateString(),
@@ -447,23 +457,30 @@
                 productos: carrito,
                 total: ventaTotal
             };
+
+            // 1. Guardar la venta en Firebase
             await db.collection('ventas').add(datosVenta);
+            
+            // 2. Descontar stock de cada producto
             for (const item of carrito) {
                 const snap = await db.collection('productos').doc(item.id).get();
                 if (snap.exists) {
                     const stockActual = snap.data().stock || 0;
-                    await db.collection('productos').doc(item.id).update({ stock: stockActual - item.cantidad });
+                    await db.collection('productos').doc(item.id).update({ 
+                        stock: stockActual - item.cantidad 
+                    });
                 }
             }
-            abrirCaja();
+
+            // 3. Imprimir ticket
             imprimirTicket(datosVenta);
+            
+            // 4. ✅ LIMPIAR TODO AUTOMÁTICAMENTE PARA NUEVA VENTA
             alert('✅ Venta realizada con éxito!');
             limpiarVenta();
             cargarCatalogo();
             cargarReportes();
         }
-
-        function abrirCaja() { alert('🔓 Caja registradora abierta'); }
 
         function imprimirTicket(venta) {
             let ticket = `
@@ -557,7 +574,7 @@ TOTAL: $${venta.total.toFixed(2)}
             document.getElementById('cantidadVentas').textContent = snap.size;
         }
 
-        // === CIERRE DE CAJA CON REINICIO AUTOMÁTICO ===
+        // === CIERRE DE CAJA CON REINICIO AUTOMÁTICO — SIN BOTÓN DE REINICIAR ===
         function actualizarFechaCierre() {
             const hoy = new Date();
             document.getElementById('cierre-fecha').textContent = hoy.toLocaleDateString();
@@ -571,15 +588,17 @@ TOTAL: $${venta.total.toFixed(2)}
             document.getElementById('cierre-total').textContent = '$' + total.toFixed(2);
             document.getElementById('cierre-cantidad').textContent = snap.size;
             
+            // Confirmar antes de cerrar y borrar
+            if (!confirm(`¿Confirmar cierre?\nVentas: ${snap.size}\nTotal: $${total.toFixed(2)}\n\n⚠️ Se borrarán las ventas del día y se reiniciará el conteo automáticamente.`)) return;
+            
+            // Guardar el cierre en el historial
             await db.collection('cierres').add({
                 fecha: new Date().toLocaleDateString(),
                 cajero: cajeroActual,
                 total, cantidadVentas: snap.size, fechaHora: new Date()
             });
             
-            // ✅ REINICIO AUTOMÁTICO DESPUÉS DEL CIERRE
-            if (!confirm(`¿Confirmar cierre?\nVentas: ${snap.size}\nTotal: $${total.toFixed(2)}\n\n⚠️ Se borrarán las ventas del día y se reiniciará el conteo.`)) return;
-            
+            // ✅ REINICIO AUTOMÁTICO — Borrar todas las ventas del día
             const batch = db.batch();
             snap.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
@@ -590,19 +609,6 @@ TOTAL: $${venta.total.toFixed(2)}
             
             alert('✅ Cierre realizado y conteo reiniciado automáticamente');
             cargarHistorialCierres();
-            cargarCatalogo();
-            cargarReportes();
-        }
-
-        async function reiniciarCierre() {
-            if (!confirm('⚠️ ¿Borrar todas las ventas del día?')) return;
-            const snap = await db.collection('ventas').get();
-            const batch = db.batch();
-            snap.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-            alert('✅ Reiniciado');
-            document.getElementById('cierre-total').textContent = '$0.00';
-            document.getElementById('cierre-cantidad').textContent = '0';
             cargarCatalogo();
             cargarReportes();
         }
